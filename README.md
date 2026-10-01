@@ -4,7 +4,7 @@
 
 API REST em **NestJS** + **TypeScript** para um sistema de rastreamento veicular. Projeto de portfólio focado em boas práticas de arquitetura, tipagem e versionamento.
 
-> Status atual: modelagem inicial com Prisma + SQLite (temporário para desenvolvimento local).
+> Status atual: Prisma + SQLite para o schema; PostgreSQL local via Docker Compose disponível para a próxima migração.
 
 ## Stack
 
@@ -13,7 +13,8 @@ API REST em **NestJS** + **TypeScript** para um sistema de rastreamento veicular
 | NestJS 12 | Framework HTTP e organização modular |
 | TypeScript | Tipagem estática |
 | Prisma 7 | ORM e migrations |
-| SQLite | Banco local temporário (migrará para PostgreSQL na etapa Docker) |
+| SQLite | Datasource temporário do Prisma (local) |
+| PostgreSQL 16 | Banco relacional via Docker Compose |
 | Jest + Supertest | Testes unitários e e2e |
 | Oxlint + Prettier | Lint e formatação |
 | GitHub Actions | Integração contínua |
@@ -23,6 +24,7 @@ API REST em **NestJS** + **TypeScript** para um sistema de rastreamento veicular
 
 - Node.js 24+ (recomendado; mínimo 24.9 para os testes com Jest + ESM)
 - npm
+- Docker + Docker Compose
 
 ## Como rodar
 
@@ -33,7 +35,10 @@ npm install
 # copiar variáveis de ambiente
 cp .env.example .env
 
-# aplicar migrations no SQLite local
+# subir API (NestJS watch) + PostgreSQL
+docker compose up -d --build
+
+# aplicar migrations no SQLite local (Prisma ainda usa SQLite nesta etapa)
 npx prisma migrate dev
 
 # desenvolvimento (watch mode)
@@ -46,9 +51,42 @@ npm run start:prod
 
 A API sobe em `http://localhost:3000` por padrão (`PORT` via variável de ambiente).
 
+## Docker Compose (API + PostgreSQL)
+
+Ambiente local com **NestJS em modo watch** e **PostgreSQL**. Credenciais e portas vêm do `.env` (use `.env.example` como base). O arquivo `.env` não é versionado.
+
+```bash
+# iniciar API + Postgres
+docker compose up -d --build
+
+# status (aguardar postgres healthy e api up)
+docker compose ps
+
+# logs da API
+docker compose logs -f api
+
+# logs do Postgres
+docker compose logs -f postgres
+
+# parar
+docker compose down
+```
+
+- API: `http://localhost:3000` (ajuste `PORT` no `.env`)
+- Postgres no host: porta `5433` → `5432` do container (ajuste `POSTGRES_PORT` se necessário)
+
+Teste rápido do banco:
+
+```bash
+docker compose exec postgres psql -U autotrack -d autotrack -c 'SELECT 1;'
+```
+
+> O volume `postgres_data` persiste os dados do Postgres entre `up`/`down`.  
+> O Prisma ainda usa **SQLite** dentro do container da API nesta etapa; a migração para PostgreSQL fica para task dedicada.
+
 ## Banco de dados (Prisma + SQLite)
 
-O datasource atual usa **SQLite** (`DATABASE_URL=file:./dev.db`) apenas para desenvolvimento local e validação do schema. Na etapa de Docker, o provider será migrado para **PostgreSQL**.
+O datasource atual do Prisma ainda usa **SQLite** (`DATABASE_URL=file:./dev.db`) para validação do schema. O PostgreSQL via Docker já está disponível; a troca do provider Prisma ocorrerá em task dedicada.
 
 ### Models iniciais
 
@@ -130,6 +168,7 @@ src/
 prisma/
 ├── schema.prisma
 └── migrations/
+docker-compose.yml          # PostgreSQL local
 ```
 
 À medida que o domínio evoluir, os módulos de negócio (ex.: veículos, manutenções, autenticação) devem ficar isolados em pastas próprias sob `src/`, seguindo o padrão de módulos do NestJS.

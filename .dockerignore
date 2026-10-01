@@ -1,0 +1,15 @@
+node_modules
+dist
+coverage
+.git
+.agents
+.claude
+.windsurf
+*.db
+*.db-journal
+.env
+.env.*
+!.env.example
+npm-debug.log*
+README.md
+CHANGELOG.md
