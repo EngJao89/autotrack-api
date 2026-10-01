@@ -19,7 +19,7 @@ API REST em **NestJS** + **TypeScript** para um sistema de rastreamento veicular
 
 ## Pré-requisitos
 
-- Node.js 20+ (recomendado)
+- Node.js 24+ (recomendado; mínimo 24.9 para os testes com Jest + ESM)
 - npm
 
 ## Como rodar
