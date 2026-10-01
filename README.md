@@ -1,5 +1,7 @@
 # Autotrack API
 
+[![CI](https://github.com/EngJao89/autotrack-api/actions/workflows/ci.yml/badge.svg)](https://github.com/EngJao89/autotrack-api/actions/workflows/ci.yml)
+
 API REST em **NestJS** + **TypeScript** para um sistema de rastreamento veicular. Projeto de portfólio focado em boas práticas de arquitetura, tipagem e versionamento.
 
 > Status atual: setup inicial do repositório e da estrutura base da aplicação.
@@ -12,6 +14,7 @@ API REST em **NestJS** + **TypeScript** para um sistema de rastreamento veicular
 | TypeScript | Tipagem estática |
 | Jest + Supertest | Testes unitários e e2e |
 | Oxlint + Prettier | Lint e formatação |
+| GitHub Actions | Integração contínua |
 | Commitizen | Commits no padrão Conventional Commits |
 
 ## Pré-requisitos
@@ -35,12 +38,34 @@ npm run start:prod
 
 A API sobe em `http://localhost:3000` por padrão (`PORT` via variável de ambiente).
 
+## Integração contínua
+
+A cada push e pull request nas branches `main`/`master`, o GitHub Actions executa:
+
+1. Instalação determinística (`npm ci`)
+2. Lint
+3. Typecheck
+4. Testes unitários e e2e
+5. Build
+
+Comandos locais equivalentes:
+
+```bash
+npm ci
+npm run lint
+npm run typecheck
+npm run test
+npm run test:e2e
+npm run build
+```
+
 ## Scripts úteis
 
 ```bash
 npm run start:dev   # sobe a API em modo watch
 npm run build       # compila para dist/
 npm run lint        # analisa o código com Oxlint
+npm run typecheck   # verifica tipagem TypeScript
 npm run format      # formata com Prettier
 npm run test        # testes unitários
 npm run test:e2e    # testes end-to-end
