@@ -10,6 +10,9 @@ concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  DATABASE_URL: file:./dev.db
+
 jobs:
   quality:
     name: Lint, typecheck, tests and build
@@ -27,6 +30,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Apply Prisma migrations
+        run: npx prisma migrate deploy
 
       - name: Lint
         run: npm run lint

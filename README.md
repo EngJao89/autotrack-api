@@ -4,7 +4,7 @@
 
 API REST em **NestJS** + **TypeScript** para um sistema de rastreamento veicular. Projeto de portfólio focado em boas práticas de arquitetura, tipagem e versionamento.
 
-> Status atual: setup inicial do repositório e da estrutura base da aplicação.
+> Status atual: modelagem inicial com Prisma + SQLite (temporário para desenvolvimento local).
 
 ## Stack
 
@@ -12,6 +12,8 @@ API REST em **NestJS** + **TypeScript** para um sistema de rastreamento veicular
 |---|---|
 | NestJS 12 | Framework HTTP e organização modular |
 | TypeScript | Tipagem estática |
+| Prisma 7 | ORM e migrations |
+| SQLite | Banco local temporário (migrará para PostgreSQL na etapa Docker) |
 | Jest + Supertest | Testes unitários e e2e |
 | Oxlint + Prettier | Lint e formatação |
 | GitHub Actions | Integração contínua |
@@ -25,8 +27,14 @@ API REST em **NestJS** + **TypeScript** para um sistema de rastreamento veicular
 ## Como rodar
 
 ```bash
-# instalar dependências
+# instalar dependências (também executa prisma generate via postinstall)
 npm install
+
+# copiar variáveis de ambiente
+cp .env.example .env
+
+# aplicar migrations no SQLite local
+npx prisma migrate dev
 
 # desenvolvimento (watch mode)
 npm run start:dev
@@ -38,20 +46,49 @@ npm run start:prod
 
 A API sobe em `http://localhost:3000` por padrão (`PORT` via variável de ambiente).
 
+## Banco de dados (Prisma + SQLite)
+
+O datasource atual usa **SQLite** (`DATABASE_URL=file:./dev.db`) apenas para desenvolvimento local e validação do schema. Na etapa de Docker, o provider será migrado para **PostgreSQL**.
+
+### Models iniciais
+
+- `User` → possui vários `Vehicle`
+- `Vehicle` → possui várias `Maintenance`
+- Relacionamentos com FK e `onDelete: Cascade`
+
+### Comandos úteis
+
+```bash
+# criar/aplicar migrations em desenvolvimento
+npx prisma migrate dev
+
+# gerar o Prisma Client
+npx prisma generate
+
+# abrir o Prisma Studio (UI para inspecionar dados)
+npx prisma studio
+```
+
+Scripts npm equivalentes: `npm run prisma:migrate`, `npm run prisma:generate`, `npm run prisma:studio`.
+
+> O arquivo local `dev.db` não é versionado no Git.
+
 ## Integração contínua
 
 A cada push e pull request nas branches `main`/`master`, o GitHub Actions executa:
 
-1. Instalação determinística (`npm ci`)
-2. Lint
-3. Typecheck
-4. Testes unitários e e2e
-5. Build
+1. Instalação determinística (`npm ci` + `prisma generate`)
+2. Application das migrations (`prisma migrate deploy`)
+3. Lint
+4. Typecheck
+5. Testes unitários e e2e
+6. Build
 
 Comandos locais equivalentes:
 
 ```bash
 npm ci
+npx prisma migrate deploy
 npm run lint
 npm run typecheck
 npm run test
@@ -62,15 +99,18 @@ npm run build
 ## Scripts úteis
 
 ```bash
-npm run start:dev   # sobe a API em modo watch
-npm run build       # compila para dist/
-npm run lint        # analisa o código com Oxlint
-npm run typecheck   # verifica tipagem TypeScript
-npm run format      # formata com Prettier
-npm run test        # testes unitários
-npm run test:e2e    # testes end-to-end
-npm run test:cov    # cobertura de testes
-npm run commit      # commit assistido (Commitizen)
+npm run start:dev       # sobe a API em modo watch
+npm run build           # compila para dist/
+npm run lint            # analisa o código com Oxlint
+npm run typecheck       # verifica tipagem TypeScript
+npm run format          # formata com Prettier
+npm run test            # testes unitários
+npm run test:e2e        # testes end-to-end
+npm run test:cov        # cobertura de testes
+npm run prisma:migrate  # migrations de desenvolvimento
+npm run prisma:generate # gera o Prisma Client
+npm run prisma:studio   # abre o Prisma Studio
+npm run commit          # commit assistido (Commitizen)
 ```
 
 ## Arquitetura
@@ -83,13 +123,16 @@ src/
 ├── app.module.ts           # módulo raiz
 ├── app.controller.ts       # controllers HTTP
 ├── app.service.ts          # regras de negócio da camada de app
-└── app.controller.spec.ts  # testes unitários
-test/
-├── app.e2e-spec.ts         # testes e2e
-└── jest-e2e.json
+├── prisma/
+│   ├── prisma.module.ts    # módulo de acesso a dados
+│   └── prisma.service.ts   # Prisma Client injetável
+└── generated/prisma/       # Prisma Client gerado (não versionado)
+prisma/
+├── schema.prisma
+└── migrations/
 ```
 
-À medida que o domínio evoluir, os módulos de negócio (ex.: veículos, rastreamento, autenticação) devem ficar isolados em pastas próprias sob `src/`, seguindo o padrão de módulos do NestJS.
+À medida que o domínio evoluir, os módulos de negócio (ex.: veículos, manutenções, autenticação) devem ficar isolados em pastas próprias sob `src/`, seguindo o padrão de módulos do NestJS.
 
 ## Commits
 
