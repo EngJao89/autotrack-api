@@ -1,0 +1,28 @@
+# Render Blueprint — demo/production technical environment for AutoTrack API
+# Docs: https://render.com/docs/blueprint-spec
+#
+# Secrets like DATABASE_URL must be set in the Render dashboard (or linked DB).
+# Do not commit real credentials.
+
+services:
+  - type: web
+    name: autotrack-api
+    runtime: node
+    plan: free
+    region: oregon
+    rootDir: .
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start:render
+    healthCheckPath: /v1/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SWAGGER_ENABLED
+        value: "true"
+      - key: DATABASE_URL
+        sync: false
+
+# Optional: create a Render PostgreSQL and link DATABASE_URL in the dashboard.
+# Free Postgres availability depends on the current Render plan/region.
+# Alternative: Neon/Supabase and paste the connection string as DATABASE_URL.

@@ -4,7 +4,7 @@
 
 API REST em **NestJS** + **TypeScript** para um sistema de rastreamento veicular. Projeto de portfólio focado em boas práticas de arquitetura, tipagem e versionamento.
 
-> Status atual: Prisma + PostgreSQL (Docker); health check com Terminus em `GET /v1/health`.
+> Status atual: Prisma + PostgreSQL; health check em `GET /v1/health`; pronto para demo no Render.
 
 ## Stack
 
@@ -14,8 +14,9 @@ API REST em **NestJS** + **TypeScript** para um sistema de rastreamento veicular
 | TypeScript | Tipagem estática |
 | Swagger/OpenAPI | Documentação da API (`/api/docs`) |
 | Prisma 7 | ORM e migrations |
-| PostgreSQL 16 | Banco relacional (Docker Compose) |
+| PostgreSQL 16 | Banco relacional (Docker / managed) |
 | NestJS Terminus | Health checks |
+| Render | Deploy de demonstração (Web Service) |
 | Jest + Supertest | Testes unitários e e2e |
 | Oxlint + Prettier | Lint e formatação |
 | GitHub Actions | Integração contínua |
@@ -161,7 +162,45 @@ npx prisma studio
 
 Scripts npm equivalentes: `npm run prisma:migrate`, `npm run prisma:generate`, `npm run prisma:studio`.
 
-> O arquivo local `dev.db` não é versionado no Git.
+> Não use SQLite em ambientes online: o filesystem do Render é efêmero.
+
+## Deploy no Render (demo)
+
+Blueprint versionado em `render.yaml`.
+
+### Configuração do Web Service
+
+| Campo | Valor |
+|---|---|
+| Runtime | Node |
+| Branch | `master` (ou branch de deploy aprovada) |
+| Build Command | `npm ci && npm run build` |
+| Start Command | `npm run start:render` |
+| Health Check Path | `/v1/health` |
+
+A API escuta em `0.0.0.0` e usa `process.env.PORT` (fornecido pelo Render).
+
+### Variáveis de ambiente (somente no dashboard)
+
+- `DATABASE_URL` — PostgreSQL gerenciado (Render Postgres, Neon ou Supabase). Preferir `?sslmode=require`
+- `NODE_ENV=production`
+- `SWAGGER_ENABLED=true` (demo/portfólio)
+- `PGSSL=true` (opcional, se a URL não trouxer `sslmode`)
+
+Não versionar secrets. Após o primeiro deploy, valide:
+
+```bash
+curl https://<seu-servico>.onrender.com/v1/health
+# Swagger: https://<seu-servico>.onrender.com/api/docs
+```
+
+> Plano free pode suspender o serviço por inatividade (cold start no primeiro request).
+
+### URL pública
+
+_Atualize este campo após o primeiro deploy bem-sucedido:_
+
+- Demo: `https://<pending>.onrender.com`
 
 ## Integração contínua
 
@@ -191,6 +230,8 @@ npm run build
 ```bash
 npm run start:dev       # sobe a API em modo watch
 npm run build           # compila para dist/
+npm run start:prod      # sobe build local
+npm run start:render    # migrate deploy + start (Render)
 npm run lint            # analisa o código com Oxlint
 npm run typecheck       # verifica tipagem TypeScript
 npm run format          # formata com Prettier
@@ -221,6 +262,7 @@ prisma/
 ├── schema.prisma
 └── migrations/
 docker-compose.yml
+render.yaml                 # blueprint Render
 ```
 
 À medida que o domínio evoluir, os módulos de negócio (ex.: veículos, manutenções, autenticação) devem ficar isolados em pastas próprias sob `src/`, seguindo o padrão de módulos do NestJS.

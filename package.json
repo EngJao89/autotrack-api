@@ -13,6 +13,7 @@
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
+    "start:render": "prisma migrate deploy && node dist/main",
     "lint": "oxlint --type-aware src/ test/ --ignore-pattern 'src/generated/**'",
     "typecheck": "tsc --noEmit",
     "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js",
@@ -26,6 +27,9 @@
     "postinstall": "prisma generate",
     "commit": "cz"
   },
+  "engines": {
+    "node": ">=24.9.0"
+  },
   "dependencies": {
     "@nestjs/common": "^12.0.1",
     "@nestjs/config": "^12.0.1",
@@ -37,7 +41,9 @@
     "@prisma/client": "^7.10.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
+    "dotenv": "^18.0.5",
     "pg": "^8.23.1",
+    "prisma": "^7.10.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1"
   },
@@ -53,12 +59,10 @@
     "@types/supertest": "^7.0.0",
     "commitizen": "^4.3.2",
     "cz-conventional-changelog": "^3.3.0",
-    "dotenv": "^18.0.5",
     "jest": "^30.0.0",
     "oxlint": "^1.58.0",
     "oxlint-tsgolint": "^7.0.2001",
     "prettier": "^3.4.2",
-    "prisma": "^7.10.0",
     "source-map-support": "^0.5.21",
     "supertest": "^7.0.0",
     "ts-jest": "^29.4.0",

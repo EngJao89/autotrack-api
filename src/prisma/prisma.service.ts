@@ -12,8 +12,15 @@ export class PrismaService
   private readonly pool: Pool;
 
   constructor(configService: ConfigService) {
+    const connectionString = configService.getOrThrow<string>('DATABASE_URL');
+    // Enable SSL only when explicitly requested (Render/Neon usually set sslmode=require).
+    const useSsl =
+      process.env.PGSSL === 'true' ||
+      /sslmode=(require|verify-ca|verify-full)/i.test(connectionString);
+
     const pool = new Pool({
-      connectionString: configService.getOrThrow<string>('DATABASE_URL'),
+      connectionString,
+      ...(useSsl ? { ssl: { rejectUnauthorized: false } } : {}),
     });
     const adapter = new PrismaPg(pool);
     super({ adapter });
