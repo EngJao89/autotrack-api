@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+- Configured OpenAPI/Swagger documentation with `/v1` prefix and `/api/docs` UI ([ATP-15])
+
 ## [0.2.0] - 2026-10-01
 
 ### Added

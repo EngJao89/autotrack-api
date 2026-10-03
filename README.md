@@ -12,6 +12,7 @@ API REST em **NestJS** + **TypeScript** para um sistema de rastreamento veicular
 |---|---|
 | NestJS 12 | Framework HTTP e organização modular |
 | TypeScript | Tipagem estática |
+| Swagger/OpenAPI | Documentação da API (`/api/docs`) |
 | Prisma 7 | ORM e migrations |
 | SQLite | Datasource temporário do Prisma (local) |
 | PostgreSQL 16 | Banco relacional via Docker Compose |
@@ -49,7 +50,27 @@ npm run build
 npm run start:prod
 ```
 
-A API sobe em `http://localhost:3000` por padrão (`PORT` via variável de ambiente).
+A API sobe em `http://localhost:3333` por padrão (`PORT` / `API_PORT` no `.env`).
+
+Rotas versionadas usam o prefixo **`/v1`** (ex.: `GET /v1/health`).
+
+## Documentação OpenAPI (Swagger)
+
+A UI do Swagger fica em:
+
+- Local: [http://localhost:3333/api/docs](http://localhost:3333/api/docs)
+
+Controle por ambiente:
+
+- Habilitada por padrão quando `NODE_ENV !== production`
+- Force com `SWAGGER_ENABLED=true` ou `false` no `.env`
+
+Tags de domínio já registradas: `Auth`, `Users`, `Vehicles`, `Maintenance` (+ `Health`).
+
+```bash
+npm run start:dev
+# abra http://localhost:3333/api/docs
+```
 
 ## Docker Compose (API + PostgreSQL)
 
@@ -72,7 +93,9 @@ docker compose logs -f postgres
 docker compose down
 ```
 
-- API: `http://localhost:3000` (ajuste `PORT` no `.env`)
+- API: `http://localhost:3333` (ajuste `PORT` no `.env`)
+- Swagger: `http://localhost:3333/api/docs`
+- Health: `http://localhost:3333/v1/health`
 - Postgres no host: porta `5433` → `5432` do container (ajuste `POSTGRES_PORT` se necessário)
 
 Teste rápido do banco:
@@ -157,18 +180,18 @@ Estrutura inicial gerada pelo NestJS, com organização modular:
 
 ```text
 src/
-├── main.ts                 # bootstrap da aplicação
-├── app.module.ts           # módulo raiz
-├── app.controller.ts       # controllers HTTP
-├── app.service.ts          # regras de negócio da camada de app
+├── main.ts                 # bootstrap, prefixo /v1 e Swagger
+├── config/swagger.ts       # DocumentBuilder + setup /api/docs
+├── common/dto/             # schemas de erro documentados
+├── health/                 # GET /v1/health
+├── users/dto/              # DTOs de exemplo (schemas OpenAPI)
+├── app.module.ts
 ├── prisma/
-│   ├── prisma.module.ts    # módulo de acesso a dados
-│   └── prisma.service.ts   # Prisma Client injetável
-└── generated/prisma/       # Prisma Client gerado (não versionado)
+└── generated/prisma/
 prisma/
 ├── schema.prisma
 └── migrations/
-docker-compose.yml          # PostgreSQL local
+docker-compose.yml
 ```
 
 À medida que o domínio evoluir, os módulos de negócio (ex.: veículos, manutenções, autenticação) devem ficar isolados em pastas próprias sob `src/`, seguindo o padrão de módulos do NestJS.
