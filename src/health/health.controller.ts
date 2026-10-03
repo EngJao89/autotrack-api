@@ -2,25 +2,42 @@ import { Controller, Get } from '@nestjs/common';
 import {
   ApiOkResponse,
   ApiOperation,
+  ApiServiceUnavailableResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { HealthResponseDto } from './dto/health-response.dto';
+import {
+  HealthCheck,
+  HealthCheckService,
+  PrismaHealthIndicator,
+} from '@nestjs/terminus';
+import { PrismaService } from '../prisma/prisma.service';
+import { HealthCheckResponseDto } from './dto/health-response.dto';
 
 @ApiTags('Health')
 @Controller('health')
 export class HealthController {
+  constructor(
+    private readonly health: HealthCheckService,
+    private readonly prismaHealth: PrismaHealthIndicator,
+    private readonly prisma: PrismaService,
+  ) {}
+
   @Get()
-  @ApiOperation({ summary: 'Verifica se a API está disponível' })
-  @ApiOkResponse({
-    description: 'API saudável',
-    type: HealthResponseDto,
+  @HealthCheck()
+  @ApiOperation({
+    summary: 'Verifica disponibilidade da API e do PostgreSQL',
   })
-  getHealth(): HealthResponseDto {
-    return {
-      status: 'ok',
-      service: 'autotrack-api',
-      version: 'v1',
-      timestamp: new Date().toISOString(),
-    };
+  @ApiOkResponse({
+    description: 'API e dependências saudáveis',
+    type: HealthCheckResponseDto,
+  })
+  @ApiServiceUnavailableResponse({
+    description: 'Uma ou mais dependências críticas estão indisponíveis',
+    type: HealthCheckResponseDto,
+  })
+  check() {
+    return this.health.check([
+      () => this.prismaHealth.pingCheck('database', this.prisma),
+    ]);
   }
 }

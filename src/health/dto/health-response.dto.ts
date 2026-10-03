@@ -1,24 +1,41 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-export class HealthResponseDto {
-  @ApiProperty({ example: 'ok', description: 'Status da API' })
-  status!: string;
+class DatabaseHealthDto {
+  @ApiProperty({ example: 'up', enum: ['up', 'down'] })
+  status!: 'up' | 'down';
+}
+
+class HealthInfoDto {
+  @ApiProperty({ type: DatabaseHealthDto })
+  database!: DatabaseHealthDto;
+}
+
+export class HealthCheckResponseDto {
+  @ApiProperty({
+    example: 'ok',
+    enum: ['ok', 'error'],
+    description: 'Status agregado do health check',
+  })
+  status!: 'ok' | 'error';
 
   @ApiProperty({
-    example: 'autotrack-api',
-    description: 'Identificador do serviço',
+    type: HealthInfoDto,
+    description: 'Indicadores saudáveis',
+    example: { database: { status: 'up' } },
   })
-  service!: string;
+  info!: HealthInfoDto | Record<string, never>;
 
   @ApiProperty({
-    example: 'v1',
-    description: 'Versão do contrato da API',
+    type: Object,
+    description: 'Indicadores com falha',
+    example: {},
   })
-  version!: string;
+  error!: Record<string, unknown>;
 
   @ApiProperty({
-    example: '2026-10-02T21:00:00.000Z',
-    description: 'Timestamp UTC da verificação',
+    type: HealthInfoDto,
+    description: 'Detalhes de todos os indicadores',
+    example: { database: { status: 'up' } },
   })
-  timestamp!: string;
+  details!: HealthInfoDto;
 }

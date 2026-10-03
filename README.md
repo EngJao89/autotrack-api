@@ -4,7 +4,7 @@
 
 API REST em **NestJS** + **TypeScript** para um sistema de rastreamento veicular. Projeto de portfólio focado em boas práticas de arquitetura, tipagem e versionamento.
 
-> Status atual: Prisma + SQLite para o schema; PostgreSQL local via Docker Compose disponível para a próxima migração.
+> Status atual: Prisma + PostgreSQL (Docker); health check com Terminus em `GET /v1/health`.
 
 ## Stack
 
@@ -14,8 +14,8 @@ API REST em **NestJS** + **TypeScript** para um sistema de rastreamento veicular
 | TypeScript | Tipagem estática |
 | Swagger/OpenAPI | Documentação da API (`/api/docs`) |
 | Prisma 7 | ORM e migrations |
-| SQLite | Datasource temporário do Prisma (local) |
-| PostgreSQL 16 | Banco relacional via Docker Compose |
+| PostgreSQL 16 | Banco relacional (Docker Compose) |
+| NestJS Terminus | Health checks |
 | Jest + Supertest | Testes unitários e e2e |
 | Oxlint + Prettier | Lint e formatação |
 | GitHub Actions | Integração contínua |
@@ -36,13 +36,13 @@ npm install
 # copiar variáveis de ambiente
 cp .env.example .env
 
-# subir API (NestJS watch) + PostgreSQL
+# subir PostgreSQL (+ API, se preferir via Docker)
 docker compose up -d --build
 
-# aplicar migrations no SQLite local (Prisma ainda usa SQLite nesta etapa)
+# aplicar migrations no PostgreSQL
 npx prisma migrate dev
 
-# desenvolvimento (watch mode)
+# desenvolvimento local (host)
 npm run start:dev
 
 # build de produção
@@ -53,6 +53,35 @@ npm run start:prod
 A API sobe em `http://localhost:3333` por padrão (`PORT` / `API_PORT` no `.env`).
 
 Rotas versionadas usam o prefixo **`/v1`** (ex.: `GET /v1/health`).
+
+## Health check
+
+`GET /v1/health` valida a API e a conectividade com o PostgreSQL (sem alterar dados de negócio).
+
+```bash
+curl http://localhost:3333/v1/health
+```
+
+Resposta saudável (HTTP 200):
+
+```json
+{
+  "status": "ok",
+  "info": {
+    "database": {
+      "status": "up"
+    }
+  },
+  "error": {},
+  "details": {
+    "database": {
+      "status": "up"
+    }
+  }
+}
+```
+
+Se o banco estiver indisponível, a API responde **HTTP 503** com `status: "error"` e o indicador `database` em `down`. O endpoint também aparece no Swagger em `/api/docs`.
 
 ## Documentação OpenAPI (Swagger)
 
@@ -105,11 +134,11 @@ docker compose exec postgres psql -U autotrack -d autotrack -c 'SELECT 1;'
 ```
 
 > O volume `postgres_data` persiste os dados do Postgres entre `up`/`down`.  
-> O Prisma ainda usa **SQLite** dentro do container da API nesta etapa; a migração para PostgreSQL fica para task dedicada.
+> No Compose, a API usa `DATABASE_URL` apontando para o serviço `postgres`.
 
-## Banco de dados (Prisma + SQLite)
+## Banco de dados (Prisma + PostgreSQL)
 
-O datasource atual do Prisma ainda usa **SQLite** (`DATABASE_URL=file:./dev.db`) para validação do schema. O PostgreSQL via Docker já está disponível; a troca do provider Prisma ocorrerá em task dedicada.
+O Prisma usa **PostgreSQL** via `DATABASE_URL` (veja `.env.example`).
 
 ### Models iniciais
 
