@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- Configured Render deployment blueprint and production bootstrap (`0.0.0.0` + `PORT`) ([ATP-24])
 - Added Terminus health check with PostgreSQL connectivity on `GET /v1/health` ([ATP-22])
 - Migrated Prisma datasource from SQLite to PostgreSQL ([ATP-22])
 - Configured OpenAPI/Swagger documentation with `/v1` prefix and `/api/docs` UI ([ATP-15])
