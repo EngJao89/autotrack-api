@@ -11,12 +11,30 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  DATABASE_URL: file:./dev.db
+  DATABASE_URL: postgresql://autotrack:autotrack@localhost:5432/autotrack?schema=public
+  POSTGRES_USER: autotrack
+  POSTGRES_PASSWORD: autotrack
+  POSTGRES_DB: autotrack
 
 jobs:
   quality:
     name: Lint, typecheck, tests and build
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: autotrack
+          POSTGRES_PASSWORD: autotrack
+          POSTGRES_DB: autotrack
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U autotrack -d autotrack"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
 
     steps:
       - name: Checkout

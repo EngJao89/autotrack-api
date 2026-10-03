@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- Added Terminus health check with PostgreSQL connectivity on `GET /v1/health` ([ATP-22])
+- Migrated Prisma datasource from SQLite to PostgreSQL ([ATP-22])
 - Configured OpenAPI/Swagger documentation with `/v1` prefix and `/api/docs` UI ([ATP-15])
 
 ## [0.2.0] - 2026-10-01
