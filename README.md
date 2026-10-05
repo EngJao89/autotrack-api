@@ -84,6 +84,32 @@ Resposta saudável (HTTP 200):
 
 Se o banco estiver indisponível, a API responde **HTTP 503** com `status: "error"` e o indicador `database` em `down`. O endpoint também aparece no Swagger em `/api/docs`.
 
+## Users
+
+Módulo base de identidade (sem senha; autenticação fica no futuro módulo Auth/Firebase).
+
+| Método | Rota | Descrição |
+|---|---|---|
+| `POST` | `/v1/users` | Cria usuário (`email` obrigatório, `name` opcional) |
+| `GET` | `/v1/users/:id` | Busca usuário por id |
+
+```bash
+# criar
+curl -X POST http://localhost:3333/v1/users \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"user@example.com","name":"Example User"}'
+
+# buscar
+curl http://localhost:3333/v1/users/<id>
+```
+
+- E-mail é normalizado (`trim` + lowercase) e único
+- Campos extras (ex.: `password`) são rejeitados pela validação global
+- Duplicidade → `409 Email already in use`
+- Não encontrado → `404 User not found`
+
+> Endpoints ainda sem autenticação: use apenas em ambiente local/demo controlado.
+
 ## Documentação OpenAPI (Swagger)
 
 A UI do Swagger fica em:
@@ -200,7 +226,7 @@ curl https://<seu-servico>.onrender.com/v1/health
 
 _Atualize este campo após o primeiro deploy bem-sucedido:_
 
-- Demo: `https://<pending>.onrender.com`
+- Demo: `https://autotrack-api-5r68.onrender.com`
 
 ## Integração contínua
 
@@ -254,7 +280,7 @@ src/
 ├── config/swagger.ts       # DocumentBuilder + setup /api/docs
 ├── common/dto/             # schemas de erro documentados
 ├── health/                 # GET /v1/health
-├── users/dto/              # DTOs de exemplo (schemas OpenAPI)
+├── users/                  # POST/GET /v1/users
 ├── app.module.ts
 ├── prisma/
 └── generated/prisma/
