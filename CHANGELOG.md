@@ -5,10 +5,14 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- Added Users module with `POST /v1/users` and `GET /v1/users/:id` ([ATP-25])
 - Configured Render deployment blueprint and production bootstrap (`0.0.0.0` + `PORT`) ([ATP-24])
 - Added Terminus health check with PostgreSQL connectivity on `GET /v1/health` ([ATP-22])
 - Migrated Prisma datasource from SQLite to PostgreSQL ([ATP-22])
 - Configured OpenAPI/Swagger documentation with `/v1` prefix and `/api/docs` UI ([ATP-15])
+
+### Changed
+- Renamed User field `nome` to `name` to match the public API contract ([ATP-25])
 
 ## [0.2.0] - 2026-10-01
 

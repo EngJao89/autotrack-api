@@ -30,7 +30,7 @@ describe('PrismaService', () => {
     const user = await prisma.user.create({
       data: {
         email,
-        nome: 'Validação Prisma',
+        name: 'Validação Prisma',
         vehicles: {
           create: {
             marca: 'Toyota',
