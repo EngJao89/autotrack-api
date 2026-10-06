@@ -4,7 +4,7 @@
 
 API REST em **NestJS** + **TypeScript** para um sistema de rastreamento veicular. Projeto de portfólio focado em boas práticas de arquitetura, tipagem e versionamento.
 
-> Status atual: Prisma + PostgreSQL; Auth Firebase; Vehicles CRUD com ownership; health check em `GET /v1/health`; pronto para demo no Render.
+> Status atual: Prisma + PostgreSQL; Auth Firebase; Vehicles e Maintenance com ownership; health check em `GET /v1/health`; pronto para demo no Render.
 
 ## Stack
 
@@ -222,6 +222,58 @@ curl http://localhost:3333/v1/vehicles -H "X-User-Id: $USER_ID"
 ```
 
 Acesso a veículo de outro usuário → `404 Vehicle not found` (sem vazar existência).
+
+## Maintenance
+
+Histórico de manutenções por veículo (`Vehicle 1:N Maintenance`). O acesso deriva do dono do veículo (mesmo adapter `X-User-Id`).
+
+| Método | Rota | Descrição |
+|---|---|---|
+| `POST` | `/v1/vehicles/:vehicleId/maintenances` | Cria manutenção |
+| `GET` | `/v1/vehicles/:vehicleId/maintenances` | Lista histórico (mais recente → mais antiga) |
+| `GET` | `/v1/maintenances/:id` | Busca por id |
+| `PATCH` | `/v1/maintenances/:id` | Atualiza (não altera `vehicleId`) |
+| `DELETE` | `/v1/maintenances/:id` | Remove |
+
+Contrato de criação:
+
+```json
+{
+  "type": "Troca de óleo",
+  "description": "Troca de óleo e filtro",
+  "serviceDate": "2026-10-03T00:00:00.000Z",
+  "odometerKm": 45000,
+  "costCents": 18990,
+  "workshopName": "Oficina AutoTrack",
+  "notes": "Próxima troca em 10.000 km"
+}
+```
+
+- `type` e `serviceDate` são obrigatórios
+- `type` aceita: `Preventiva`, `Corretiva`, `Revisão`, `Troca de óleo`, `Pneus`, `Freios`, `Elétrica`, `Outro`
+- `costCents` é inteiro em centavos (`>= 0`) para evitar float
+- `odometerKm`, quando enviado, não pode ser negativo
+- O client **não** envia `id`, `vehicleId`, `createdAt` ou `updatedAt` (`vehicleId` vem da rota)
+
+Filtros na listagem:
+
+| Query | Descrição |
+|---|---|
+| `type` | Tipo de manutenção |
+| `startDate` / `endDate` | Período em `serviceDate` (ISO-8601) |
+| `odometerMin` / `odometerMax` | Faixa de quilometragem |
+
+```bash
+curl -X POST "http://localhost:3333/v1/vehicles/$VEHICLE_ID/maintenances" \
+  -H "Content-Type: application/json" \
+  -H "X-User-Id: $USER_ID" \
+  -d '{"type":"Troca de óleo","serviceDate":"2026-10-03T00:00:00.000Z","costCents":18990}'
+
+curl "http://localhost:3333/v1/vehicles/$VEHICLE_ID/maintenances?type=Troca%20de%20%C3%B3leo&startDate=2026-01-01T00:00:00.000Z" \
+  -H "X-User-Id: $USER_ID"
+```
+
+Veículo/manutenção inexistente ou de outro usuário → `404`.
 
 ## Documentação OpenAPI (Swagger)
 
