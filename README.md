@@ -4,7 +4,7 @@
 
 API REST em **NestJS** + **TypeScript** para um sistema de rastreamento veicular. Projeto de portfólio focado em boas práticas de arquitetura, tipagem e versionamento.
 
-> Status atual: Prisma + PostgreSQL; Auth Firebase (`GET /v1/auth/me`); health check em `GET /v1/health`; pronto para demo no Render.
+> Status atual: Prisma + PostgreSQL; Auth Firebase; Vehicles CRUD com ownership; health check em `GET /v1/health`; pronto para demo no Render.
 
 ## Stack
 
@@ -163,6 +163,65 @@ curl http://localhost:3333/v1/users/<id>
 - Não encontrado → `404 User not found`
 
 > Endpoints de Users ainda sem autenticação: use apenas em ambiente local/demo controlado.
+
+## Vehicles
+
+CRUD de veículos do usuário autenticado (ownership obrigatório). Relação `User 1:N Vehicle`.
+
+| Método | Rota | Descrição |
+|---|---|---|
+| `POST` | `/v1/vehicles` | Cria veículo |
+| `GET` | `/v1/vehicles` | Lista só os veículos do usuário atual |
+| `GET` | `/v1/vehicles/:id` | Busca por id (somente se for dono) |
+| `PATCH` | `/v1/vehicles/:id` | Atualiza (não altera `userId`) |
+| `DELETE` | `/v1/vehicles/:id` | Remove (cascade em manutenções) |
+
+Campos do contrato de criação:
+
+```json
+{
+  "brand": "Toyota",
+  "model": "Corolla",
+  "version": "XEi 2.0",
+  "year": 2022,
+  "licensePlate": "ABC1D23",
+  "color": "Prata",
+  "fuelType": "flex",
+  "odometerKm": 45000
+}
+```
+
+`brand`, `model` e `year` são obrigatórios. `year` aceita inteiros de `1900` até `anoAtual + 1`. `odometerKm`, quando enviado, não pode ser negativo. O client **não** pode enviar `id`, `userId`, `createdAt` ou `updatedAt`.
+
+### Adapter local de `userId` (somente desenvolvimento)
+
+Enquanto o vínculo final Auth→User de produção não está fechado neste módulo, o ownership usa o header:
+
+```http
+X-User-Id: <id-de-um-User-existente>
+```
+
+- Habilitado por padrão quando `NODE_ENV !== production`
+- **Sempre desabilitado em production**
+- Pode forçar off com `LOCAL_USER_ID_HEADER_ENABLED=false`
+
+```bash
+# 1) criar usuário
+USER_ID=$(curl -s -X POST http://localhost:3333/v1/users \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"driver@example.com","name":"Driver"}' | jq -r .id)
+
+# 2) criar veículo
+curl -X POST http://localhost:3333/v1/vehicles \
+  -H "Content-Type: application/json" \
+  -H "X-User-Id: $USER_ID" \
+  -d '{"brand":"Toyota","model":"Corolla","year":2022,"licensePlate":"ABC1D23"}'
+
+# 3) listar
+curl http://localhost:3333/v1/vehicles -H "X-User-Id: $USER_ID"
+```
+
+Acesso a veículo de outro usuário → `404 Vehicle not found` (sem vazar existência).
 
 ## Documentação OpenAPI (Swagger)
 

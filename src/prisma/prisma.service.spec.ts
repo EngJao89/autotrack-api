@@ -33,10 +33,10 @@ describe('PrismaService', () => {
         name: 'Validação Prisma',
         vehicles: {
           create: {
-            marca: 'Toyota',
-            modelo: 'Corolla',
-            ano: 2020,
-            placa: 'ABC1D23',
+            brand: 'Toyota',
+            model: 'Corolla',
+            year: 2020,
+            licensePlate: 'ABC1D23',
             maintenances: {
               create: {
                 tipo: 'Troca de óleo',
@@ -72,7 +72,7 @@ describe('PrismaService', () => {
     expect(stored).not.toBeNull();
     expect(stored?.email).toBe(email);
     expect(stored?.vehicles).toHaveLength(1);
-    expect(stored?.vehicles[0]?.marca).toBe('Toyota');
+    expect(stored?.vehicles[0]?.brand).toBe('Toyota');
     expect(stored?.vehicles[0]?.maintenances).toHaveLength(1);
     expect(stored?.vehicles[0]?.maintenances[0]?.tipo).toBe('Troca de óleo');
 
