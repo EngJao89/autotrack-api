@@ -5,10 +5,12 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- Added Maintenance module with vehicle ownership, filters and CRUD ([ATP-28])
 - Added Vehicles module with ownership rules and CRUD under `/v1/vehicles` ([ATP-26])
 - Added Firebase Auth module with Bearer validation and `GET /v1/auth/me` ([ATP-21])
 
 ### Changed
+- Aligned Maintenance Prisma fields to the English API contract (`type`, `serviceDate`, `costCents`, …) ([ATP-28])
 - Aligned Vehicle Prisma fields to the English API contract (`brand`, `model`, `year`, `licensePlate`, …) ([ATP-26])
 - Added Users module with `POST /v1/users` and `GET /v1/users/:id` ([ATP-25])
 - Configured Render deployment blueprint and production bootstrap (`0.0.0.0` + `PORT`) ([ATP-24])

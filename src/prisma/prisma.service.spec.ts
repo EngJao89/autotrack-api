@@ -39,13 +39,14 @@ describe('PrismaService', () => {
             licensePlate: 'ABC1D23',
             maintenances: {
               create: {
-                tipo: 'Troca de óleo',
-                descricao: 'Validação de persistência',
-                data: new Date('2026-10-01'),
-                quilometragem: 45000,
-                custo: 250.5,
+                type: 'Troca de óleo',
+                description: 'Validação de persistência',
+                serviceDate: new Date('2026-10-01'),
+                odometerKm: 45000,
+                costCents: 25050,
               },
             },
+
           },
         },
       },
@@ -74,7 +75,8 @@ describe('PrismaService', () => {
     expect(stored?.vehicles).toHaveLength(1);
     expect(stored?.vehicles[0]?.brand).toBe('Toyota');
     expect(stored?.vehicles[0]?.maintenances).toHaveLength(1);
-    expect(stored?.vehicles[0]?.maintenances[0]?.tipo).toBe('Troca de óleo');
+    expect(stored?.vehicles[0]?.maintenances[0]?.type).toBe('Troca de óleo');
+    expect(stored?.vehicles[0]?.maintenances[0]?.costCents).toBe(25050);
 
     await prisma.user.delete({ where: { id: user.id } });
 

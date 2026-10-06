@@ -40,16 +40,18 @@ model Vehicle {
 }
 
 model Maintenance {
-  id            String   @id @default(cuid())
-  vehicleId     String
-  tipo          String
-  descricao     String?
-  data          DateTime
-  quilometragem Int?
-  custo         Decimal?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  vehicle       Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  id           String   @id @default(cuid())
+  vehicleId    String
+  type         String
+  description  String?
+  serviceDate  DateTime
+  odometerKm   Int?
+  costCents    Int?
+  workshopName String?
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  vehicle      Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
 
   @@index([vehicleId])
 }
