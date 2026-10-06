@@ -4,7 +4,7 @@
 
 API REST em **NestJS** + **TypeScript** para um sistema de rastreamento veicular. Projeto de portfólio focado em boas práticas de arquitetura, tipagem e versionamento.
 
-> Status atual: Prisma + PostgreSQL; health check em `GET /v1/health`; pronto para demo no Render.
+> Status atual: Prisma + PostgreSQL; Auth Firebase (`GET /v1/auth/me`); health check em `GET /v1/health`; pronto para demo no Render.
 
 ## Stack
 
@@ -12,6 +12,7 @@ API REST em **NestJS** + **TypeScript** para um sistema de rastreamento veicular
 |---|---|
 | NestJS 12 | Framework HTTP e organização modular |
 | TypeScript | Tipagem estática |
+| Firebase Admin | Validação de ID Tokens (Auth) |
 | Swagger/OpenAPI | Documentação da API (`/api/docs`) |
 | Prisma 7 | ORM e migrations |
 | PostgreSQL 16 | Banco relacional (Docker / managed) |
@@ -84,9 +85,62 @@ Resposta saudável (HTTP 200):
 
 Se o banco estiver indisponível, a API responde **HTTP 503** com `status: "error"` e o indicador `database` em `down`. O endpoint também aparece no Swagger em `/api/docs`.
 
+## Auth (Firebase)
+
+A API **não** armazena senha nem emite JWT próprio. O app Expo autentica no Firebase e envia o ID Token:
+
+```http
+Authorization: Bearer <firebase-id-token>
+```
+
+| Método | Rota | Descrição |
+|---|---|---|
+| `GET` | `/v1/auth/me` | Retorna `userId` (UID Firebase) e `email` do token |
+
+Variáveis no `.env` (service account; nunca versionar valores reais):
+
+```bash
+FIREBASE_PROJECT_ID=
+FIREBASE_CLIENT_EMAIL=
+FIREBASE_PRIVATE_KEY=
+```
+
+Se a private key vier com quebras de linha, mantenha-as escapadas como `\n` no `.env`.
+
+```bash
+# token ausente → 401 AUTH_TOKEN_MISSING
+curl http://localhost:3333/v1/auth/me
+
+# token válido → 200
+curl http://localhost:3333/v1/auth/me \
+  -H "Authorization: Bearer <firebase-id-token>"
+```
+
+Respostas de erro (sem token, stack ou detalhes internos):
+
+```json
+{
+  "statusCode": 401,
+  "code": "AUTH_TOKEN_MISSING",
+  "message": "Authentication token is required"
+}
+```
+
+```json
+{
+  "statusCode": 401,
+  "code": "AUTH_TOKEN_INVALID",
+  "message": "Authentication token is invalid or expired"
+}
+```
+
+No Swagger (`/api/docs`), use o botão **Authorize** e cole o Firebase ID Token.
+
+Para proteger outros endpoints: `@UseGuards(AuthGuard)` + `@ApiBearerAuth('bearer')` e, se precisar do usuário, `@CurrentUser()`.
+
 ## Users
 
-Módulo base de identidade (sem senha; autenticação fica no futuro módulo Auth/Firebase).
+Módulo base de identidade local (sem senha). Autenticação de request fica no módulo Auth/Firebase.
 
 | Método | Rota | Descrição |
 |---|---|---|
@@ -108,7 +162,7 @@ curl http://localhost:3333/v1/users/<id>
 - Duplicidade → `409 Email already in use`
 - Não encontrado → `404 User not found`
 
-> Endpoints ainda sem autenticação: use apenas em ambiente local/demo controlado.
+> Endpoints de Users ainda sem autenticação: use apenas em ambiente local/demo controlado.
 
 ## Documentação OpenAPI (Swagger)
 
@@ -212,6 +266,7 @@ A API escuta em `0.0.0.0` e usa `process.env.PORT` (fornecido pelo Render).
 - `NODE_ENV=production`
 - `SWAGGER_ENABLED=true` (demo/portfólio)
 - `PGSSL=true` (opcional, se a URL não trouxer `sslmode`)
+- `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY` — service account do Firebase (rotas protegidas)
 
 Não versionar secrets. Após o primeiro deploy, valide:
 

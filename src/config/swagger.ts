@@ -1,5 +1,6 @@
 import { INestApplication } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { AuthErrorResponseDto } from '../auth/dto/auth-error.dto';
 import { HttpErrorResponseDto } from '../common/dto/http-error.dto';
 import { ValidationErrorResponseDto } from '../common/dto/validation-error.dto';
 import { CreateUserDto } from '../users/dto/create-user.dto';
@@ -10,9 +11,11 @@ export function setupSwagger(app: INestApplication): void {
     .setDescription(
       'API REST do AutoTrack para gestão de usuários, veículos e manutenções. ' +
         'Contrato público versionado em `/v1`. Mudanças incompatíveis serão planejadas em `/v2`.\n\n' +
+        'Autenticação: Firebase ID Token no header `Authorization: Bearer <token>`.\n\n' +
         'Erros comuns:\n' +
         '- `400` validação de payload (`ValidationErrorResponseDto`)\n' +
-        '- `401/403` autenticação/autorização\n' +
+        '- `401` token ausente/inválido (`AuthErrorResponseDto`)\n' +
+        '- `403` autenticação/autorização\n' +
         '- `404` recurso não encontrado (`HttpErrorResponseDto`)\n' +
         '- `500` erro interno',
     )
@@ -23,13 +26,22 @@ export function setupSwagger(app: INestApplication): void {
     .addTag('Vehicles', 'Veículos')
     .addTag('Maintenance', 'Manutenções')
     .addTag('Health', 'Saúde da aplicação')
-    .addBearerAuth()
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        description: 'Firebase ID Token',
+      },
+      'bearer',
+    )
     .build();
 
   const document = SwaggerModule.createDocument(app, config, {
     extraModels: [
       ValidationErrorResponseDto,
       HttpErrorResponseDto,
+      AuthErrorResponseDto,
       CreateUserDto,
     ],
   });

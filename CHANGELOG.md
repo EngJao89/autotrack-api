@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- Added Firebase Auth module with Bearer validation and `GET /v1/auth/me` ([ATP-21])
 - Added Users module with `POST /v1/users` and `GET /v1/users/:id` ([ATP-25])
 - Configured Render deployment blueprint and production bootstrap (`0.0.0.0` + `PORT`) ([ATP-24])
 - Added Terminus health check with PostgreSQL connectivity on `GET /v1/health` ([ATP-22])
