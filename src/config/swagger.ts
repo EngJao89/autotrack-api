@@ -4,6 +4,8 @@ import { AuthErrorResponseDto } from '../auth/dto/auth-error.dto';
 import { HttpErrorResponseDto } from '../common/dto/http-error.dto';
 import { ValidationErrorResponseDto } from '../common/dto/validation-error.dto';
 import { CreateUserDto } from '../users/dto/create-user.dto';
+import { CreateVehicleDto } from '../vehicles/dto/create-vehicle.dto';
+import { VehicleResponseDto } from '../vehicles/dto/vehicle-response.dto';
 
 export function setupSwagger(app: INestApplication): void {
   const config = new DocumentBuilder()
@@ -43,6 +45,8 @@ export function setupSwagger(app: INestApplication): void {
       HttpErrorResponseDto,
       AuthErrorResponseDto,
       CreateUserDto,
+      CreateVehicleDto,
+      VehicleResponseDto,
     ],
   });
 
