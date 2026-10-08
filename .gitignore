@@ -21,6 +21,9 @@ lerna-debug.log*
 # Tests
 /coverage
 /.nyc_output
+/test/tmp/
+/test/*.db
+/test/*.db-journal
 
 # IDEs and editors
 /.idea

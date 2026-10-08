@@ -3,8 +3,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from '../src/app.module';
+import { FIREBASE_TOKEN_VERIFIER } from '../src/auth/auth.constants';
 import { API_ERROR_CODE } from '../src/common/errors/error-codes';
 import { createValidationPipe } from '../src/common/validation/create-validation-pipe';
+import { createFirebaseTokenVerifierMock } from './helpers/auth';
 
 @Controller('test-errors')
 class BoomController {
@@ -21,7 +23,10 @@ describe('API error contract (e2e)', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
       controllers: [BoomController],
-    }).compile();
+    })
+      .overrideProvider(FIREBASE_TOKEN_VERIFIER)
+      .useValue(createFirebaseTokenVerifierMock())
+      .compile();
 
     app = moduleFixture.createNestApplication();
     app.setGlobalPrefix('v1');
@@ -54,9 +59,7 @@ describe('API error contract (e2e)', () => {
       expect.arrayContaining([
         expect.objectContaining({
           field: 'email',
-          messages: expect.arrayContaining([
-            expect.stringContaining('email'),
-          ]),
+          messages: expect.arrayContaining([expect.stringContaining('email')]),
         }),
         expect.objectContaining({
           field: 'password',

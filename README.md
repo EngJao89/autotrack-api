@@ -457,10 +457,49 @@ npm ci
 npx prisma migrate deploy
 npm run lint
 npm run typecheck
-npm run test
-npm run test:e2e
+npm run test:all
 npm run build
 ```
+
+## Testes (unitários + E2E)
+
+Estratégia documentada em [`docs/testing.md`](docs/testing.md).
+
+| Camada | Ferramenta | Escopo |
+|---|---|---|
+| Unitários | Jest (`*.spec.ts` em `src/`) | Services, guards, validators — Prisma/Firebase mockados |
+| E2E | Jest + Supertest (`test/*.e2e-spec.ts`) | HTTP real, pipes, guards, DB isolado |
+
+Após a migração para PostgreSQL, o E2E usa um **banco dedicado** `autotrack_e2e` (não o DB de desenvolvimento). Configure com `E2E_DATABASE_URL` se necessário.
+
+```bash
+# Postgres local (Compose) precisa estar up
+docker compose up -d postgres
+
+# unitários
+npm run test
+npm run test:watch
+npm run test:cov
+
+# e2e (cria/migra autotrack_e2e automaticamente)
+npm run test:e2e
+
+# tudo em sequência
+npm run test:all
+```
+
+Estrutura:
+
+```text
+src/**/*.spec.ts          # unitários
+test/
+├── helpers/              # create-test-app, database, auth mock, global-setup
+├── fixtures/             # users, vehicles, maintenances
+├── *.e2e-spec.ts
+└── jest-e2e.json
+```
+
+Firebase **nunca** é chamado de verdade nos testes — o verifier é mockado via `FIREBASE_TOKEN_VERIFIER`.
 
 ## Scripts úteis
 
@@ -473,8 +512,9 @@ npm run lint            # analisa o código com Oxlint
 npm run typecheck       # verifica tipagem TypeScript
 npm run format          # formata com Prettier
 npm run test            # testes unitários
-npm run test:e2e        # testes end-to-end
-npm run test:cov        # cobertura de testes
+npm run test:e2e        # testes end-to-end (DB isolado)
+npm run test:cov        # cobertura unitária
+npm run test:all        # unit + e2e
 npm run prisma:migrate  # migrations de desenvolvimento
 npm run prisma:generate # gera o Prisma Client
 npm run prisma:studio   # abre o Prisma Studio

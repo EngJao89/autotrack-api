@@ -14,6 +14,7 @@ const config: Config = {
   moduleFileExtensions: ['js', 'json', 'ts'],
   rootDir: '.',
   testRegex: '.*\\.spec\\.ts$',
+  testPathIgnorePatterns: ['/node_modules/', '/test/', '/dist/'],
   transform: {
     '^.+\\.(t|j)s$': 'ts-jest',
   },
@@ -23,11 +24,14 @@ const config: Config = {
   },
   collectCoverageFrom: [
     'src/**/*.(t|j)s',
-    'libs/**/*.(t|j)s',
-    'apps/**/*.(t|j)s',
+    '!src/generated/**',
+    '!src/main.ts',
   ],
   coverageDirectory: './coverage',
+  coverageReporters: ['text', 'lcov', 'html'],
   testEnvironment: 'node',
+  clearMocks: true,
+  restoreMocks: true,
 };
 
 export default config;

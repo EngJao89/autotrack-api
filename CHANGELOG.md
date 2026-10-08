@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- Configured isolated unit/E2E test suite with helpers, fixtures and coverage scripts ([ATP-17])
 - Extended User profile with CNH/document/phone and PUT/PATCH/DELETE operations ([ATP-29])
 - Documented auth/user lifecycle decisions in `docs/auth-and-user-lifecycle.md` ([ATP-29])
 - Standardized global DTO validation, error codes and `requestId` correlation ([ATP-14])
