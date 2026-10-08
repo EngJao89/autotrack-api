@@ -4,6 +4,9 @@ import { AuthErrorResponseDto } from '../auth/dto/auth-error.dto';
 import { HttpErrorResponseDto } from '../common/dto/http-error.dto';
 import { ValidationErrorResponseDto } from '../common/dto/validation-error.dto';
 import { CreateUserDto } from '../users/dto/create-user.dto';
+import { PutUserDto } from '../users/dto/put-user.dto';
+import { UpdateUserDto } from '../users/dto/update-user.dto';
+import { UserResponseDto } from '../users/dto/user-response.dto';
 import { CreateMaintenanceDto } from '../maintenances/dto/create-maintenance.dto';
 import { MaintenanceResponseDto } from '../maintenances/dto/maintenance-response.dto';
 import { CreateVehicleDto } from '../vehicles/dto/create-vehicle.dto';
@@ -49,6 +52,9 @@ export function setupSwagger(app: INestApplication): void {
       HttpErrorResponseDto,
       AuthErrorResponseDto,
       CreateUserDto,
+      PutUserDto,
+      UpdateUserDto,
+      UserResponseDto,
       CreateVehicleDto,
       VehicleResponseDto,
       CreateMaintenanceDto,

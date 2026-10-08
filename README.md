@@ -172,12 +172,17 @@ Para proteger outros endpoints: `@UseGuards(AuthGuard)` + `@ApiBearerAuth('beare
 
 ## Users
 
-Módulo base de identidade local (sem senha). Autenticação de request fica no módulo Auth/Firebase.
+Perfil local (sem senha). Decisões de auth/ciclo de vida: [`docs/auth-and-user-lifecycle.md`](docs/auth-and-user-lifecycle.md).
 
-| Método | Rota | Descrição |
-|---|---|---|
-| `POST` | `/v1/users` | Cria usuário (`email` obrigatório, `name` opcional) |
-| `GET` | `/v1/users/:id` | Busca usuário por id |
+| Método | Rota | Auth | Descrição |
+|---|---|---|---|
+| `POST` | `/v1/users` | — | Cria usuário (`email` obrigatório, `name` opcional) |
+| `GET` | `/v1/users/:id` | — | Busca usuário por id |
+| `PUT` | `/v1/users/:id` | `X-User-Id` | Substitui perfil mutável (omitidos → `null`) |
+| `PATCH` | `/v1/users/:id` | `X-User-Id` | Atualização parcial |
+| `DELETE` | `/v1/users/:id` | `X-User-Id` | Exclusão física (+ cascade de veículos) |
+
+Campos de perfil: `name`, `cnh`, `document`, `documentType` (`CPF`/`CNPJ`), `phone`.
 
 ```bash
 # criar
@@ -185,16 +190,24 @@ curl -X POST http://localhost:3333/v1/users \
   -H 'Content-Type: application/json' \
   -d '{"email":"user@example.com","name":"Example User"}'
 
-# buscar
-curl http://localhost:3333/v1/users/<id>
+# substituir perfil (somente o próprio id)
+curl -X PUT http://localhost:3333/v1/users/<id> \
+  -H 'Content-Type: application/json' \
+  -H "X-User-Id: <id>" \
+  -d '{"name":"Nome do usuário","document":"52998224725","documentType":"CPF","phone":"+5511999999999","cnh":"10000000091"}'
+
+# patch
+curl -X PATCH http://localhost:3333/v1/users/<id> \
+  -H 'Content-Type: application/json' \
+  -H "X-User-Id: <id>" \
+  -d '{"phone":"+5511987654321"}'
 ```
 
-- E-mail é normalizado (`trim` + lowercase) e único
-- Campos extras (ex.: `password`) são rejeitados pela validação global
-- Duplicidade → `409 Email already in use`
-- Não encontrado → `404 User not found`
-
-> Endpoints de Users ainda sem autenticação: use apenas em ambiente local/demo controlado.
+- E-mail único; `document` e `cnh` únicos quando preenchidos; `phone` não é único
+- Documentos/CNH/telefone são normalizados (só dígitos / E.164) e validados
+- `password` / secrets são rejeitados
+- Outro usuário → `403`; sem contexto → `401`; não encontrado → `404`
+- `DELETE` remove veículos/manutenções relacionados por CASCADE
 
 ## Vehicles
 

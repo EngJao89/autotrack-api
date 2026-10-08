@@ -1,14 +1,34 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Patch,
+  Post,
+  Put,
+  UseGuards,
+} from '@nestjs/common';
 import {
   ApiConflictResponse,
   ApiCreatedResponse,
+  ApiForbiddenResponse,
+  ApiHeader,
+  ApiNoContentResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { HttpErrorResponseDto } from '../common/dto/http-error.dto';
+import { CurrentUserId } from '../common/user-context/current-user-id.decorator';
+import { UserContextGuard } from '../common/user-context/user-context.guard';
 import { CreateUserDto } from './dto/create-user.dto';
+import { PutUserDto } from './dto/put-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 import { UserResponseDto } from './dto/user-response.dto';
 import { UsersService } from './users.service';
 
@@ -21,7 +41,7 @@ export class UsersController {
   @ApiOperation({
     summary: 'Cria um usuário',
     description:
-      'Fluxo local/desenvolvimento até existir autenticação. Não aceite senha ou secrets neste contrato.',
+      'Bootstrap local/desenvolvimento. Não aceite senha ou secrets neste contrato.',
   })
   @ApiCreatedResponse({ type: UserResponseDto })
   @ApiConflictResponse({
@@ -41,5 +61,80 @@ export class UsersController {
   })
   findById(@Param('id') id: string): Promise<UserResponseDto> {
     return this.usersService.findById(id);
+  }
+
+  @Put(':id')
+  @UseGuards(UserContextGuard)
+  @ApiHeader({
+    name: 'X-User-Id',
+    required: true,
+    description: 'Adapter local de desenvolvimento (desabilitado em production)',
+  })
+  @ApiOperation({
+    summary: 'Substitui o perfil do usuário (PUT)',
+    description:
+      'Substituição completa dos campos mutáveis (name, cnh, document, documentType, phone). ' +
+      'Campos omitidos viram null. Email/id/timestamps não são aceitos. Somente o próprio usuário.',
+  })
+  @ApiOkResponse({ type: UserResponseDto })
+  @ApiUnauthorizedResponse({ type: HttpErrorResponseDto })
+  @ApiForbiddenResponse({ type: HttpErrorResponseDto })
+  @ApiNotFoundResponse({ type: HttpErrorResponseDto })
+  @ApiConflictResponse({ type: HttpErrorResponseDto })
+  replace(
+    @CurrentUserId() actorUserId: string,
+    @Param('id') id: string,
+    @Body() dto: PutUserDto,
+  ): Promise<UserResponseDto> {
+    return this.usersService.replaceProfile(actorUserId, id, dto);
+  }
+
+  @Patch(':id')
+  @UseGuards(UserContextGuard)
+  @ApiHeader({
+    name: 'X-User-Id',
+    required: true,
+    description: 'Adapter local de desenvolvimento (desabilitado em production)',
+  })
+  @ApiOperation({
+    summary: 'Atualiza parcialmente o perfil (PATCH)',
+    description:
+      'Altera apenas os campos enviados. null limpa o campo. Somente o próprio usuário.',
+  })
+  @ApiOkResponse({ type: UserResponseDto })
+  @ApiUnauthorizedResponse({ type: HttpErrorResponseDto })
+  @ApiForbiddenResponse({ type: HttpErrorResponseDto })
+  @ApiNotFoundResponse({ type: HttpErrorResponseDto })
+  @ApiConflictResponse({ type: HttpErrorResponseDto })
+  update(
+    @CurrentUserId() actorUserId: string,
+    @Param('id') id: string,
+    @Body() dto: UpdateUserDto,
+  ): Promise<UserResponseDto> {
+    return this.usersService.updateProfile(actorUserId, id, dto);
+  }
+
+  @Delete(':id')
+  @UseGuards(UserContextGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiHeader({
+    name: 'X-User-Id',
+    required: true,
+    description: 'Adapter local de desenvolvimento (desabilitado em production)',
+  })
+  @ApiOperation({
+    summary: 'Remove o usuário (DELETE físico)',
+    description:
+      'Exclusão física. Veículos e manutenções relacionadas são removidos por CASCADE. Somente o próprio usuário.',
+  })
+  @ApiNoContentResponse()
+  @ApiUnauthorizedResponse({ type: HttpErrorResponseDto })
+  @ApiForbiddenResponse({ type: HttpErrorResponseDto })
+  @ApiNotFoundResponse({ type: HttpErrorResponseDto })
+  async remove(
+    @CurrentUserId() actorUserId: string,
+    @Param('id') id: string,
+  ): Promise<void> {
+    await this.usersService.removeProfile(actorUserId, id);
   }
 }

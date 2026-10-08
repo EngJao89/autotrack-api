@@ -10,6 +10,18 @@ export class UserResponseDto {
   @ApiPropertyOptional({ example: 'Example User', nullable: true })
   name!: string | null;
 
+  @ApiPropertyOptional({ example: '10000000091', nullable: true })
+  cnh!: string | null;
+
+  @ApiPropertyOptional({ example: '52998224725', nullable: true })
+  document!: string | null;
+
+  @ApiPropertyOptional({ example: 'CPF', nullable: true, enum: ['CPF', 'CNPJ'] })
+  documentType!: string | null;
+
+  @ApiPropertyOptional({ example: '+5511999999999', nullable: true })
+  phone!: string | null;
+
   @ApiProperty({ example: '2026-10-05T20:00:00.000Z' })
   createdAt!: Date;
 
