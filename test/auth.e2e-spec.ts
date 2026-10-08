@@ -1,4 +1,4 @@
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import { App } from 'supertest/types';
@@ -6,6 +6,7 @@ import { AppModule } from '../src/app.module';
 import { AUTH_ERROR_CODE, FIREBASE_TOKEN_VERIFIER } from '../src/auth/auth.constants';
 import { AuthUnauthorizedException } from '../src/auth/exceptions/auth-unauthorized.exception';
 import { FirebaseTokenVerifier } from '../src/auth/interfaces/firebase-token-verifier';
+import { createValidationPipe } from '../src/common/validation/create-validation-pipe';
 
 describe('AuthController (e2e)', () => {
   let app: INestApplication<App>;
@@ -25,13 +26,7 @@ describe('AuthController (e2e)', () => {
 
     app = moduleFixture.createNestApplication();
     app.setGlobalPrefix('v1');
-    app.useGlobalPipes(
-      new ValidationPipe({
-        whitelist: true,
-        forbidNonWhitelisted: true,
-        transform: true,
-      }),
-    );
+    app.useGlobalPipes(createValidationPipe());
     await app.init();
   });
 
@@ -69,11 +64,12 @@ describe('AuthController (e2e)', () => {
       .get('/v1/auth/me')
       .expect(401);
 
-    expect(response.body).toEqual({
+    expect(response.body).toMatchObject({
       statusCode: 401,
       code: AUTH_ERROR_CODE.TOKEN_MISSING,
       message: 'Authentication token is required',
     });
+    expect(response.body.requestId).toEqual(expect.any(String));
     expect(response.body).not.toHaveProperty('stack');
     expect(tokenVerifier.verifyIdToken.mock.calls).toHaveLength(0);
   });
@@ -91,11 +87,12 @@ describe('AuthController (e2e)', () => {
       .set('Authorization', 'Bearer expired-token')
       .expect(401);
 
-    expect(response.body).toEqual({
+    expect(response.body).toMatchObject({
       statusCode: 401,
       code: AUTH_ERROR_CODE.TOKEN_INVALID,
       message: 'Authentication token is invalid or expired',
     });
+    expect(response.body.requestId).toEqual(expect.any(String));
     expect(JSON.stringify(response.body)).not.toMatch(/stack|credential|private/i);
   });
 });

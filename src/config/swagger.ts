@@ -16,12 +16,14 @@ export function setupSwagger(app: INestApplication): void {
       'API REST do AutoTrack para gestão de usuários, veículos e manutenções. ' +
         'Contrato público versionado em `/v1`. Mudanças incompatíveis serão planejadas em `/v2`.\n\n' +
         'Autenticação: Firebase ID Token no header `Authorization: Bearer <token>`.\n\n' +
+        'Validação global: `whitelist` + `forbidNonWhitelisted` + `transform`.\n' +
+        'Erros seguem o contrato `{ statusCode, code, message, errors?, requestId }`.\n\n' +
         'Erros comuns:\n' +
-        '- `400` validação de payload (`ValidationErrorResponseDto`)\n' +
+        '- `400` `VALIDATION_ERROR` (`ValidationErrorResponseDto`)\n' +
         '- `401` token ausente/inválido (`AuthErrorResponseDto`)\n' +
-        '- `403` autenticação/autorização\n' +
-        '- `404` recurso não encontrado (`HttpErrorResponseDto`)\n' +
-        '- `500` erro interno',
+        '- `404` `NOT_FOUND` (`HttpErrorResponseDto`)\n' +
+        '- `409` `CONFLICT`\n' +
+        '- `500` `INTERNAL_ERROR` (sem stack/SQL/segredos)',
     )
     .setVersion('v1')
     .setContact('AutoTrack', 'https://github.com/EngJao89/autotrack-api', '')

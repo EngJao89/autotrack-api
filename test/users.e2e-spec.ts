@@ -1,9 +1,9 @@
-import { INestApplication, ValidationPipe } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
+import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
-import { AppModule } from '../src/app.module';
+import { API_ERROR_CODE } from '../src/common/errors/error-codes';
 import { PrismaService } from '../src/prisma/prisma.service';
+import { createTestApp } from './utils/create-test-app';
 
 describe('UsersController (e2e)', () => {
   let app: INestApplication<App>;
@@ -11,20 +11,8 @@ describe('UsersController (e2e)', () => {
   const createdIds: string[] = [];
 
   beforeAll(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-
-    app = moduleFixture.createNestApplication();
-    app.setGlobalPrefix('v1');
-    app.useGlobalPipes(
-      new ValidationPipe({
-        whitelist: true,
-        forbidNonWhitelisted: true,
-        transform: true,
-      }),
-    );
-    await app.init();
+    const setup = await createTestApp();
+    app = setup.app;
     prisma = app.get(PrismaService);
   });
 
@@ -64,16 +52,42 @@ describe('UsersController (e2e)', () => {
       })
       .expect(400);
 
-    expect(response.body.message).toEqual(
-      expect.arrayContaining([expect.stringContaining('property password')]),
+    expect(response.body).toMatchObject({
+      statusCode: 400,
+      code: API_ERROR_CODE.VALIDATION_ERROR,
+      message: 'Request validation failed',
+    });
+    expect(response.body.requestId).toEqual(expect.any(String));
+    expect(response.body.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          field: 'password',
+          messages: expect.arrayContaining([
+            expect.stringContaining('property password'),
+          ]),
+        }),
+      ]),
     );
   });
 
   it('POST /v1/users rejects invalid email', async () => {
-    await request(app.getHttpServer())
+    const response = await request(app.getHttpServer())
       .post('/v1/users')
       .send({ email: 'not-an-email' })
       .expect(400);
+
+    expect(response.body).toMatchObject({
+      statusCode: 400,
+      code: API_ERROR_CODE.VALIDATION_ERROR,
+      message: 'Request validation failed',
+    });
+    expect(response.body.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          field: 'email',
+        }),
+      ]),
+    );
   });
 
   it('POST /v1/users returns conflict for duplicated email', async () => {
@@ -92,8 +106,10 @@ describe('UsersController (e2e)', () => {
 
     expect(duplicate.body).toMatchObject({
       statusCode: 409,
+      code: API_ERROR_CODE.CONFLICT,
       message: 'Email already in use',
     });
+    expect(duplicate.body.requestId).toEqual(expect.any(String));
   });
 
   it('GET /v1/users/:id returns the user', async () => {
@@ -122,7 +138,9 @@ describe('UsersController (e2e)', () => {
 
     expect(response.body).toMatchObject({
       statusCode: 404,
+      code: API_ERROR_CODE.NOT_FOUND,
       message: 'User not found',
     });
+    expect(response.body.requestId).toEqual(expect.any(String));
   });
 });

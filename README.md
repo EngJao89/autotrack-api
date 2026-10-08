@@ -4,7 +4,7 @@
 
 API REST em **NestJS** + **TypeScript** para um sistema de rastreamento veicular. Projeto de portfólio focado em boas práticas de arquitetura, tipagem e versionamento.
 
-> Status atual: Prisma + PostgreSQL; Auth Firebase; Vehicles e Maintenance com ownership; health check em `GET /v1/health`; pronto para demo no Render.
+> Status atual: Prisma + PostgreSQL; Auth Firebase; Vehicles/Maintenance; validação/erros padronizados; health check; pronto para demo no Render.
 
 ## Stack
 
@@ -84,6 +84,38 @@ Resposta saudável (HTTP 200):
 ```
 
 Se o banco estiver indisponível, a API responde **HTTP 503** com `status: "error"` e o indicador `database` em `down`. O endpoint também aparece no Swagger em `/api/docs`.
+
+## Validação e erros (contrato)
+
+A API usa `ValidationPipe` global com:
+
+- `transform: true` — conversão controlada de tipos
+- `whitelist: true` — remove propriedades não declaradas no DTO
+- `forbidNonWhitelisted: true` — rejeita campos extras com HTTP 400
+
+DTOs de User, Vehicle e Maintenance usam `class-validator` + decorators Swagger. Campos como `id`, `userId`, `vehicleId`, `createdAt` e `updatedAt` não entram nos payloads de criação/atualização.
+
+Todas as respostas de erro seguem:
+
+```json
+{
+  "statusCode": 400,
+  "code": "VALIDATION_ERROR",
+  "message": "Request validation failed",
+  "errors": [
+    {
+      "field": "email",
+      "messages": ["email must be an email"]
+    }
+  ],
+  "requestId": "9f3c2b1a-4d5e-6789-abcd-ef0123456789"
+}
+```
+
+Códigos estáveis principais: `VALIDATION_ERROR`, `UNAUTHORIZED`, `NOT_FOUND`, `CONFLICT`, `INTERNAL_ERROR` (+ códigos Auth `AUTH_TOKEN_*`).
+
+- Header `X-Request-Id` é aceito; se ausente, a API gera um UUID e devolve no response header
+- Erros `500` são genéricos para o client; detalhes técnicos ficam só nos logs (sem stack/SQL/tokens)
 
 ## Auth (Firebase)
 
