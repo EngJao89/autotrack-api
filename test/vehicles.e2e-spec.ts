@@ -1,9 +1,9 @@
-import { INestApplication, ValidationPipe } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
+import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
-import { AppModule } from '../src/app.module';
+import { API_ERROR_CODE } from '../src/common/errors/error-codes';
 import { PrismaService } from '../src/prisma/prisma.service';
+import { createTestApp } from './utils/create-test-app';
 
 describe('VehiclesController (e2e)', () => {
   let app: INestApplication<App>;
@@ -23,20 +23,8 @@ describe('VehiclesController (e2e)', () => {
   };
 
   beforeAll(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-
-    app = moduleFixture.createNestApplication();
-    app.setGlobalPrefix('v1');
-    app.useGlobalPipes(
-      new ValidationPipe({
-        whitelist: true,
-        forbidNonWhitelisted: true,
-        transform: true,
-      }),
-    );
-    await app.init();
+    const setup = await createTestApp();
+    app = setup.app;
     prisma = app.get(PrismaService);
   });
 
@@ -190,10 +178,25 @@ describe('VehiclesController (e2e)', () => {
       })
       .expect(400);
 
-    expect(forbidden.body.message).toEqual(
+    expect(forbidden.body).toMatchObject({
+      statusCode: 400,
+      code: API_ERROR_CODE.VALIDATION_ERROR,
+      message: 'Request validation failed',
+    });
+    expect(forbidden.body.errors).toEqual(
       expect.arrayContaining([
-        expect.stringContaining('property userId'),
-        expect.stringContaining('property id'),
+        expect.objectContaining({
+          field: 'userId',
+          messages: expect.arrayContaining([
+            expect.stringContaining('property userId'),
+          ]),
+        }),
+        expect.objectContaining({
+          field: 'id',
+          messages: expect.arrayContaining([
+            expect.stringContaining('property id'),
+          ]),
+        }),
       ]),
     );
   });
