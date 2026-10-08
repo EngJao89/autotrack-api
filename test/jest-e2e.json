@@ -8,5 +8,8 @@
   },
   "moduleNameMapper": {
     "^(\\.{1,2}/.*)\\.js$": "$1"
-  }
+  },
+  "globalSetup": "<rootDir>/helpers/global-setup.ts",
+  "setupFiles": ["<rootDir>/helpers/setup-env.ts"],
+  "testTimeout": 30000
 }

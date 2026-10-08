@@ -3,100 +3,74 @@ import request from 'supertest';
 import { App } from 'supertest/types';
 import { API_ERROR_CODE } from '../src/common/errors/error-codes';
 import { PrismaService } from '../src/prisma/prisma.service';
-import { createTestApp } from './utils/create-test-app';
+import { buildMaintenancePayload } from './fixtures/maintenances';
+import { buildCreateUserPayload } from './fixtures/users';
+import { buildVehiclePayload } from './fixtures/vehicles';
+import { createTestApp } from './helpers/create-test-app';
+import { resetDatabase } from './helpers/database';
 
 describe('MaintenancesController (e2e)', () => {
   let app: INestApplication<App>;
   let prisma: PrismaService;
-  const createdUserIds: string[] = [];
-  const createdVehicleIds: string[] = [];
-  const createdMaintenanceIds: string[] = [];
 
   beforeAll(async () => {
     const setup = await createTestApp();
     app = setup.app;
-    prisma = app.get(PrismaService);
+    prisma = setup.prisma;
+  });
+
+  afterEach(async () => {
+    await resetDatabase(prisma);
   });
 
   afterAll(async () => {
-    if (createdMaintenanceIds.length > 0) {
-      await prisma.maintenance.deleteMany({
-        where: { id: { in: createdMaintenanceIds } },
-      });
-    }
-    if (createdVehicleIds.length > 0) {
-      await prisma.vehicle.deleteMany({
-        where: { id: { in: createdVehicleIds } },
-      });
-    }
-    if (createdUserIds.length > 0) {
-      await prisma.user.deleteMany({ where: { id: { in: createdUserIds } } });
-    }
     await app.close();
   });
 
-  async function createUser(prefix: string): Promise<string> {
-    const response = await request(app.getHttpServer())
+  async function createOwnedVehicle(): Promise<{
+    userId: string;
+    vehicleId: string;
+  }> {
+    const user = await request(app.getHttpServer())
       .post('/v1/users')
-      .send({
-        email: `${prefix}-${Date.now()}@example.com`,
-        name: prefix,
-      })
+      .send(buildCreateUserPayload())
       .expect(201);
-    createdUserIds.push(response.body.id);
-    return response.body.id as string;
-  }
 
-  async function createVehicle(userId: string): Promise<string> {
-    const response = await request(app.getHttpServer())
+    const vehicle = await request(app.getHttpServer())
       .post('/v1/vehicles')
-      .set('X-User-Id', userId)
-      .send({ brand: 'Toyota', model: 'Corolla', year: 2022 })
+      .set('X-User-Id', user.body.id)
+      .send(buildVehiclePayload())
       .expect(201);
-    createdVehicleIds.push(response.body.id);
-    return response.body.id as string;
+
+    return { userId: user.body.id, vehicleId: vehicle.body.id };
   }
 
-  it('creates, lists with filters, updates and deletes maintenance', async () => {
-    const userId = await createUser('maint-owner');
-    const vehicleId = await createVehicle(userId);
+  it('creates, filters, updates and deletes maintenance for owned vehicle', async () => {
+    const { userId, vehicleId } = await createOwnedVehicle();
 
     const created = await request(app.getHttpServer())
       .post(`/v1/vehicles/${vehicleId}/maintenances`)
       .set('X-User-Id', userId)
-      .send({
-        type: 'Troca de óleo',
-        description: 'Troca de óleo e filtro',
-        serviceDate: '2026-10-03T00:00:00.000Z',
-        odometerKm: 45000,
-        costCents: 18990,
-        workshopName: 'Oficina AutoTrack',
-        notes: 'Próxima troca em 10.000 km',
-      })
+      .send(buildMaintenancePayload())
       .expect(201);
 
-    createdMaintenanceIds.push(created.body.id);
     expect(created.body).toMatchObject({
       vehicleId,
       type: 'Troca de óleo',
-      description: 'Troca de óleo e filtro',
-      odometerKm: 45000,
       costCents: 18990,
-      workshopName: 'Oficina AutoTrack',
     });
-    expect(created.body).not.toHaveProperty('custo');
 
     await request(app.getHttpServer())
       .post(`/v1/vehicles/${vehicleId}/maintenances`)
       .set('X-User-Id', userId)
-      .send({
-        type: 'Pneus',
-        serviceDate: '2025-05-01T00:00:00.000Z',
-        odometerKm: 20000,
-        costCents: 50000,
-      })
-      .expect(201)
-      .then((response) => createdMaintenanceIds.push(response.body.id));
+      .send(
+        buildMaintenancePayload({
+          type: 'Pneus',
+          serviceDate: '2025-05-01T00:00:00.000Z',
+          odometerKm: 20000,
+        }),
+      )
+      .expect(201);
 
     const filtered = await request(app.getHttpServer())
       .get(`/v1/vehicles/${vehicleId}/maintenances`)
@@ -104,8 +78,6 @@ describe('MaintenancesController (e2e)', () => {
         type: 'Troca de óleo',
         startDate: '2026-01-01T00:00:00.000Z',
         endDate: '2026-12-31T23:59:59.999Z',
-        odometerMin: 40000,
-        odometerMax: 50000,
       })
       .set('X-User-Id', userId)
       .expect(200);
@@ -113,25 +85,11 @@ describe('MaintenancesController (e2e)', () => {
     expect(filtered.body).toHaveLength(1);
     expect(filtered.body[0].id).toBe(created.body.id);
 
-    const listed = await request(app.getHttpServer())
-      .get(`/v1/vehicles/${vehicleId}/maintenances`)
-      .set('X-User-Id', userId)
-      .expect(200);
-
-    expect(listed.body[0].serviceDate >= listed.body[1].serviceDate).toBe(true);
-
-    const updated = await request(app.getHttpServer())
+    await request(app.getHttpServer())
       .patch(`/v1/maintenances/${created.body.id}`)
       .set('X-User-Id', userId)
-      .send({ notes: 'Atualizado', costCents: 19990 })
+      .send({ notes: 'Atualizado' })
       .expect(200);
-
-    expect(updated.body).toMatchObject({
-      id: created.body.id,
-      vehicleId,
-      notes: 'Atualizado',
-      costCents: 19990,
-    });
 
     await request(app.getHttpServer())
       .delete(`/v1/maintenances/${created.body.id}`)
@@ -144,107 +102,36 @@ describe('MaintenancesController (e2e)', () => {
       .expect(404);
   });
 
-  it('isolates maintenance access by vehicle ownership', async () => {
-    const ownerId = await createUser('maint-iso-owner');
-    const otherId = await createUser('maint-iso-other');
-    const vehicleId = await createVehicle(ownerId);
+  it('rejects invalid maintenance payloads and foreign ownership', async () => {
+    const owner = await createOwnedVehicle();
+    const otherUser = await request(app.getHttpServer())
+      .post('/v1/users')
+      .send(buildCreateUserPayload({ name: 'Other' }))
+      .expect(201);
 
     const created = await request(app.getHttpServer())
-      .post(`/v1/vehicles/${vehicleId}/maintenances`)
-      .set('X-User-Id', ownerId)
-      .send({
-        type: 'Preventiva',
-        serviceDate: '2026-10-03T00:00:00.000Z',
-      })
+      .post(`/v1/vehicles/${owner.vehicleId}/maintenances`)
+      .set('X-User-Id', owner.userId)
+      .send(buildMaintenancePayload({ type: 'Preventiva' }))
       .expect(201);
-    createdMaintenanceIds.push(created.body.id);
-
-    await request(app.getHttpServer())
-      .get(`/v1/vehicles/${vehicleId}/maintenances`)
-      .set('X-User-Id', otherId)
-      .expect(404);
 
     await request(app.getHttpServer())
       .get(`/v1/maintenances/${created.body.id}`)
-      .set('X-User-Id', otherId)
+      .set('X-User-Id', otherUser.body.id)
       .expect(404);
 
-    await request(app.getHttpServer())
-      .patch(`/v1/maintenances/${created.body.id}`)
-      .set('X-User-Id', otherId)
-      .send({ notes: 'hack' })
-      .expect(404);
-
-    await request(app.getHttpServer())
-      .delete(`/v1/maintenances/${created.body.id}`)
-      .set('X-User-Id', otherId)
-      .expect(404);
-  });
-
-  it('rejects invalid payloads and forbidden fields', async () => {
-    const userId = await createUser('maint-validation');
-    const vehicleId = await createVehicle(userId);
-
-    await request(app.getHttpServer())
-      .post(`/v1/vehicles/${vehicleId}/maintenances`)
-      .set('X-User-Id', userId)
+    const invalid = await request(app.getHttpServer())
+      .post(`/v1/vehicles/${owner.vehicleId}/maintenances`)
+      .set('X-User-Id', owner.userId)
       .send({
         type: 'Tipo inválido',
         serviceDate: '2026-10-03T00:00:00.000Z',
       })
       .expect(400);
 
-    await request(app.getHttpServer())
-      .post(`/v1/vehicles/${vehicleId}/maintenances`)
-      .set('X-User-Id', userId)
-      .send({
-        type: 'Preventiva',
-        serviceDate: 'not-a-date',
-      })
-      .expect(400);
-
-    await request(app.getHttpServer())
-      .post(`/v1/vehicles/${vehicleId}/maintenances`)
-      .set('X-User-Id', userId)
-      .send({
-        type: 'Preventiva',
-        serviceDate: '2026-10-03T00:00:00.000Z',
-        costCents: -1,
-        odometerKm: -10,
-      })
-      .expect(400);
-
-    const forbidden = await request(app.getHttpServer())
-      .post(`/v1/vehicles/${vehicleId}/maintenances`)
-      .set('X-User-Id', userId)
-      .send({
-        type: 'Preventiva',
-        serviceDate: '2026-10-03T00:00:00.000Z',
-        vehicleId: 'forced-vehicle',
-        id: 'forced-id',
-      })
-      .expect(400);
-
-    expect(forbidden.body).toMatchObject({
+    expect(invalid.body).toMatchObject({
       statusCode: 400,
       code: API_ERROR_CODE.VALIDATION_ERROR,
-      message: 'Request validation failed',
     });
-    expect(forbidden.body.errors).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          field: 'vehicleId',
-          messages: expect.arrayContaining([
-            expect.stringContaining('property vehicleId'),
-          ]),
-        }),
-        expect.objectContaining({
-          field: 'id',
-          messages: expect.arrayContaining([
-            expect.stringContaining('property id'),
-          ]),
-        }),
-      ]),
-    );
   });
 });

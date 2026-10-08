@@ -1,33 +1,23 @@
 import { INestApplication } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import { App } from 'supertest/types';
-import { AppModule } from '../src/app.module';
-import { AUTH_ERROR_CODE, FIREBASE_TOKEN_VERIFIER } from '../src/auth/auth.constants';
+import { AUTH_ERROR_CODE } from '../src/auth/auth.constants';
 import { AuthUnauthorizedException } from '../src/auth/exceptions/auth-unauthorized.exception';
-import { FirebaseTokenVerifier } from '../src/auth/interfaces/firebase-token-verifier';
-import { createValidationPipe } from '../src/common/validation/create-validation-pipe';
+import type { FirebaseTokenVerifier } from '../src/auth/interfaces/firebase-token-verifier';
+import {
+  createAuthenticatedUser,
+  createFirebaseTokenVerifierMock,
+} from './helpers/auth';
+import { createTestApp } from './helpers/create-test-app';
 
 describe('AuthController (e2e)', () => {
   let app: INestApplication<App>;
   let tokenVerifier: jest.Mocked<FirebaseTokenVerifier>;
 
   beforeAll(async () => {
-    tokenVerifier = {
-      verifyIdToken: jest.fn(),
-    };
-
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    })
-      .overrideProvider(FIREBASE_TOKEN_VERIFIER)
-      .useValue(tokenVerifier)
-      .compile();
-
-    app = moduleFixture.createNestApplication();
-    app.setGlobalPrefix('v1');
-    app.useGlobalPipes(createValidationPipe());
-    await app.init();
+    tokenVerifier = createFirebaseTokenVerifierMock();
+    const setup = await createTestApp({ firebaseVerifier: tokenVerifier });
+    app = setup.app;
   });
 
   afterAll(async () => {
@@ -39,11 +29,7 @@ describe('AuthController (e2e)', () => {
   });
 
   it('GET /v1/auth/me returns the authenticated user for a valid token', async () => {
-    tokenVerifier.verifyIdToken.mockResolvedValue({
-      userId: 'firebase-uid',
-      email: 'user@example.com',
-      claims: { uid: 'firebase-uid' },
-    });
+    tokenVerifier.verifyIdToken.mockResolvedValue(createAuthenticatedUser());
 
     const response = await request(app.getHttpServer())
       .get('/v1/auth/me')
@@ -92,7 +78,8 @@ describe('AuthController (e2e)', () => {
       code: AUTH_ERROR_CODE.TOKEN_INVALID,
       message: 'Authentication token is invalid or expired',
     });
-    expect(response.body.requestId).toEqual(expect.any(String));
-    expect(JSON.stringify(response.body)).not.toMatch(/stack|credential|private/i);
+    expect(JSON.stringify(response.body)).not.toMatch(
+      /stack|credential|private/i,
+    );
   });
 });

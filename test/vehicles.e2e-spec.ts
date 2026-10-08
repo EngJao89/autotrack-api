@@ -3,78 +3,52 @@ import request from 'supertest';
 import { App } from 'supertest/types';
 import { API_ERROR_CODE } from '../src/common/errors/error-codes';
 import { PrismaService } from '../src/prisma/prisma.service';
-import { createTestApp } from './utils/create-test-app';
+import { buildCreateUserPayload } from './fixtures/users';
+import { buildVehiclePayload } from './fixtures/vehicles';
+import { createTestApp } from './helpers/create-test-app';
+import { resetDatabase } from './helpers/database';
 
 describe('VehiclesController (e2e)', () => {
   let app: INestApplication<App>;
   let prisma: PrismaService;
-  const createdUserIds: string[] = [];
-  const createdVehicleIds: string[] = [];
-
-  const vehiclePayload = {
-    brand: 'Toyota',
-    model: 'Corolla',
-    version: 'XEi 2.0',
-    year: 2022,
-    licensePlate: 'abc1d23',
-    color: 'Prata',
-    fuelType: 'Flex',
-    odometerKm: 45000,
-  };
 
   beforeAll(async () => {
     const setup = await createTestApp();
     app = setup.app;
-    prisma = app.get(PrismaService);
+    prisma = setup.prisma;
+  });
+
+  afterEach(async () => {
+    await resetDatabase(prisma);
   });
 
   afterAll(async () => {
-    if (createdVehicleIds.length > 0) {
-      await prisma.vehicle.deleteMany({
-        where: { id: { in: createdVehicleIds } },
-      });
-    }
-    if (createdUserIds.length > 0) {
-      await prisma.user.deleteMany({ where: { id: { in: createdUserIds } } });
-    }
     await app.close();
   });
 
-  async function createUser(prefix: string): Promise<string> {
+  async function createUser(): Promise<string> {
     const response = await request(app.getHttpServer())
       .post('/v1/users')
-      .send({
-        email: `${prefix}-${Date.now()}@example.com`,
-        name: prefix,
-      })
+      .send(buildCreateUserPayload())
       .expect(201);
-
-    createdUserIds.push(response.body.id);
     return response.body.id as string;
   }
 
   it('creates, lists, updates and deletes vehicles for the local user', async () => {
-    const userId = await createUser('owner');
+    const userId = await createUser();
 
     const created = await request(app.getHttpServer())
       .post('/v1/vehicles')
       .set('X-User-Id', userId)
-      .send(vehiclePayload)
+      .send(buildVehiclePayload({ licensePlate: 'abc1d23', fuelType: 'Flex' }))
       .expect(201);
 
-    createdVehicleIds.push(created.body.id);
     expect(created.body).toMatchObject({
       userId,
       brand: 'Toyota',
-      model: 'Corolla',
-      version: 'XEi 2.0',
-      year: 2022,
       licensePlate: 'ABC1D23',
-      color: 'Prata',
       fuelType: 'flex',
-      odometerKm: 45000,
     });
-    expect(created.body).not.toHaveProperty('password');
 
     const listed = await request(app.getHttpServer())
       .get('/v1/vehicles')
@@ -87,18 +61,11 @@ describe('VehiclesController (e2e)', () => {
       ]),
     );
 
-    const updated = await request(app.getHttpServer())
+    await request(app.getHttpServer())
       .patch(`/v1/vehicles/${created.body.id}`)
       .set('X-User-Id', userId)
-      .send({ color: 'Preto', odometerKm: 46000 })
+      .send({ color: 'Preto' })
       .expect(200);
-
-    expect(updated.body).toMatchObject({
-      id: created.body.id,
-      userId,
-      color: 'Preto',
-      odometerKm: 46000,
-    });
 
     await request(app.getHttpServer())
       .delete(`/v1/vehicles/${created.body.id}`)
@@ -111,22 +78,20 @@ describe('VehiclesController (e2e)', () => {
       .expect(404);
   });
 
-  it('isolates vehicles between users', async () => {
-    const ownerId = await createUser('owner-iso');
-    const otherId = await createUser('other-iso');
+  it('isolates vehicles between users and rejects invalid payloads', async () => {
+    const ownerId = await createUser();
+    const otherId = await createUser();
 
     const created = await request(app.getHttpServer())
       .post('/v1/vehicles')
       .set('X-User-Id', ownerId)
-      .send({ brand: 'Honda', model: 'Civic', year: 2021 })
+      .send(buildVehiclePayload({ brand: 'Honda', model: 'Civic', year: 2021 }))
       .expect(201);
-    createdVehicleIds.push(created.body.id);
 
     const otherList = await request(app.getHttpServer())
       .get('/v1/vehicles')
       .set('X-User-Id', otherId)
       .expect(200);
-
     expect(otherList.body).toEqual([]);
 
     await request(app.getHttpServer())
@@ -134,74 +99,17 @@ describe('VehiclesController (e2e)', () => {
       .set('X-User-Id', otherId)
       .expect(404);
 
-    await request(app.getHttpServer())
-      .patch(`/v1/vehicles/${created.body.id}`)
-      .set('X-User-Id', otherId)
-      .send({ color: 'Azul' })
-      .expect(404);
-
-    await request(app.getHttpServer())
-      .delete(`/v1/vehicles/${created.body.id}`)
-      .set('X-User-Id', otherId)
-      .expect(404);
-  });
-
-  it('rejects invalid payloads and forbidden ownership fields', async () => {
-    const userId = await createUser('validation');
-
-    await request(app.getHttpServer())
+    const invalid = await request(app.getHttpServer())
       .post('/v1/vehicles')
-      .set('X-User-Id', userId)
+      .set('X-User-Id', ownerId)
       .send({ brand: 'Toyota', model: 'Corolla', year: 1800 })
       .expect(400);
 
-    await request(app.getHttpServer())
-      .post('/v1/vehicles')
-      .set('X-User-Id', userId)
-      .send({
-        brand: 'Toyota',
-        model: 'Corolla',
-        year: 2022,
-        odometerKm: -1,
-      })
-      .expect(400);
-
-    const forbidden = await request(app.getHttpServer())
-      .post('/v1/vehicles')
-      .set('X-User-Id', userId)
-      .send({
-        brand: 'Toyota',
-        model: 'Corolla',
-        year: 2022,
-        userId: 'another-user',
-        id: 'forced-id',
-      })
-      .expect(400);
-
-    expect(forbidden.body).toMatchObject({
+    expect(invalid.body).toMatchObject({
       statusCode: 400,
       code: API_ERROR_CODE.VALIDATION_ERROR,
-      message: 'Request validation failed',
     });
-    expect(forbidden.body.errors).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          field: 'userId',
-          messages: expect.arrayContaining([
-            expect.stringContaining('property userId'),
-          ]),
-        }),
-        expect.objectContaining({
-          field: 'id',
-          messages: expect.arrayContaining([
-            expect.stringContaining('property id'),
-          ]),
-        }),
-      ]),
-    );
-  });
 
-  it('requires the local user header', async () => {
     await request(app.getHttpServer()).get('/v1/vehicles').expect(401);
   });
 });

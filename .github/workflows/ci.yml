@@ -12,9 +12,12 @@ concurrency:
 
 env:
   DATABASE_URL: postgresql://autotrack:autotrack@localhost:5432/autotrack?schema=public
+  E2E_DATABASE_URL: postgresql://autotrack:autotrack@localhost:5432/autotrack_e2e?schema=public
   POSTGRES_USER: autotrack
   POSTGRES_PASSWORD: autotrack
   POSTGRES_DB: autotrack
+  LOCAL_USER_ID_HEADER_ENABLED: "true"
+  NODE_ENV: test
 
 jobs:
   quality:
@@ -59,10 +62,15 @@ jobs:
         run: npm run typecheck
 
       - name: Unit tests
-        run: npm run test
+        run: npm run test -- --runInBand
+
+      - name: Unit coverage
+        run: npm run test:cov -- --runInBand --coverageReporters=text-summary
 
       - name: E2E tests
-        run: npm run test:e2e
+        run: npm run test:e2e -- --runInBand
+        env:
+          DATABASE_URL: ${{ env.E2E_DATABASE_URL }}
 
       - name: Build
         run: npm run build

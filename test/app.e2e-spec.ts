@@ -1,7 +1,7 @@
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
-import { createTestApp } from './utils/create-test-app';
+import { createTestApp } from './helpers/create-test-app';
 
 describe('AppController (e2e)', () => {
   let app: INestApplication<App>;
@@ -11,14 +11,18 @@ describe('AppController (e2e)', () => {
     app = setup.app;
   });
 
-  it('/v1 (GET)', () => {
+  afterEach(async () => {
+    await app.close();
+  });
+
+  it('GET /v1 returns hello world', () => {
     return request(app.getHttpServer())
       .get('/v1')
       .expect(200)
       .expect('Hello World!');
   });
 
-  it('/v1/health (GET) should report database up', () => {
+  it('GET /v1/health reports database up', () => {
     return request(app.getHttpServer())
       .get('/v1/health')
       .expect(200)
@@ -28,9 +32,5 @@ describe('AppController (e2e)', () => {
         expect(res.body.error).toEqual({});
         expect(res.body.details.database.status).toBe('up');
       });
-  });
-
-  afterEach(async () => {
-    await app.close();
   });
 });
