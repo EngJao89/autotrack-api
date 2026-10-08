@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- Extended User profile with CNH/document/phone and PUT/PATCH/DELETE operations ([ATP-29])
+- Documented auth/user lifecycle decisions in `docs/auth-and-user-lifecycle.md` ([ATP-29])
 - Standardized global DTO validation, error codes and `requestId` correlation ([ATP-14])
 - Added Maintenance module with vehicle ownership, filters and CRUD ([ATP-28])
 - Added Vehicles module with ownership rules and CRUD under `/v1/vehicles` ([ATP-26])

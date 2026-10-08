@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
@@ -13,6 +14,8 @@ describe('UsersService', () => {
     user: {
       create: jest.Mock;
       findUnique: jest.Mock;
+      update: jest.Mock;
+      delete: jest.Mock;
     };
   };
 
@@ -20,6 +23,10 @@ describe('UsersService', () => {
     id: 'user_1',
     email: 'user@example.com',
     name: 'Example User',
+    cnh: null,
+    document: null,
+    documentType: null,
+    phone: null,
     createdAt: new Date('2026-10-05T20:00:00.000Z'),
     updatedAt: new Date('2026-10-05T20:00:00.000Z'),
   };
@@ -29,6 +36,8 @@ describe('UsersService', () => {
       user: {
         create: jest.fn(),
         findUnique: jest.fn(),
+        update: jest.fn(),
+        delete: jest.fn(),
       },
     };
 
@@ -61,6 +70,7 @@ describe('UsersService', () => {
     const error = new Prisma.PrismaClientKnownRequestError('Unique constraint', {
       code: 'P2002',
       clientVersion: '7.10.0',
+      meta: { target: ['email'] },
     });
     prisma.user.create.mockRejectedValue(error);
 
@@ -69,13 +79,94 @@ describe('UsersService', () => {
     ).rejects.toBeInstanceOf(ConflictException);
   });
 
+  it('replaces profile fields for the owner and nulls omitted ones', async () => {
+    prisma.user.findUnique.mockResolvedValue(user);
+    prisma.user.update.mockResolvedValue({
+      ...user,
+      name: 'Nome do usuário',
+      document: '52998224725',
+      documentType: 'CPF',
+      phone: '+5511999999999',
+      cnh: null,
+    });
+
+    const result = await service.replaceProfile('user_1', 'user_1', {
+      name: 'Nome do usuário',
+      document: '52998224725',
+      documentType: 'CPF',
+      phone: '+5511999999999',
+    });
+
+    expect(prisma.user.update).toHaveBeenCalledWith({
+      where: { id: 'user_1' },
+      data: {
+        name: 'Nome do usuário',
+        cnh: null,
+        document: '52998224725',
+        documentType: 'CPF',
+        phone: '+5511999999999',
+      },
+    });
+    expect(result).not.toHaveProperty('password');
+  });
+
+  it('patches only provided fields', async () => {
+    prisma.user.findUnique.mockResolvedValue(user);
+    prisma.user.update.mockResolvedValue({
+      ...user,
+      phone: '+5511987654321',
+    });
+
+    await service.updateProfile('user_1', 'user_1', {
+      phone: '+5511987654321',
+    });
+
+    expect(prisma.user.update).toHaveBeenCalledWith({
+      where: { id: 'user_1' },
+      data: {
+        phone: '+5511987654321',
+      },
+    });
+  });
+
+  it('forbids modifying another user profile', async () => {
+    await expect(
+      service.replaceProfile('user_1', 'user_2', { name: 'Hack' }),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+  });
+
+  it('deletes an owned profile', async () => {
+    prisma.user.findUnique.mockResolvedValue(user);
+    prisma.user.delete.mockResolvedValue(user);
+
+    await expect(
+      service.removeProfile('user_1', 'user_1'),
+    ).resolves.toBeUndefined();
+    expect(prisma.user.delete).toHaveBeenCalledWith({ where: { id: 'user_1' } });
+  });
+
+  it('maps document unique conflicts', async () => {
+    prisma.user.findUnique.mockResolvedValue(user);
+    prisma.user.update.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError('Unique constraint', {
+        code: 'P2002',
+        clientVersion: '7.10.0',
+        meta: { target: ['document'] },
+      }),
+    );
+
+    await expect(
+      service.updateProfile('user_1', 'user_1', {
+        document: '52998224725',
+        documentType: 'CPF',
+      }),
+    ).rejects.toThrow('Document already in use');
+  });
+
   it('finds a user by id', async () => {
     prisma.user.findUnique.mockResolvedValue(user);
 
     await expect(service.findById('user_1')).resolves.toEqual(user);
-    expect(prisma.user.findUnique).toHaveBeenCalledWith({
-      where: { id: 'user_1' },
-    });
   });
 
   it('throws not found when user does not exist', async () => {

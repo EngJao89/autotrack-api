@@ -143,4 +143,128 @@ describe('UsersController (e2e)', () => {
     });
     expect(response.body.requestId).toEqual(expect.any(String));
   });
+
+  it('PUT/PATCH update owned profile and DELETE cascades vehicles', async () => {
+    const created = await request(app.getHttpServer())
+      .post('/v1/users')
+      .send({ email: `profile-${Date.now()}@example.com`, name: 'Before' })
+      .expect(201);
+    const userId = created.body.id as string;
+
+    const put = await request(app.getHttpServer())
+      .put(`/v1/users/${userId}`)
+      .set('X-User-Id', userId)
+      .send({
+        name: 'Nome do usuário',
+        cnh: '10000000091',
+        document: '529.982.247-25',
+        documentType: 'CPF',
+        phone: '(11) 99999-9999',
+      })
+      .expect(200);
+
+    expect(put.body).toMatchObject({
+      id: userId,
+      name: 'Nome do usuário',
+      cnh: '10000000091',
+      document: '52998224725',
+      documentType: 'CPF',
+      phone: '+5511999999999',
+    });
+    expect(put.body).not.toHaveProperty('password');
+    expect(put.body).not.toHaveProperty('passwordHash');
+
+    const patched = await request(app.getHttpServer())
+      .patch(`/v1/users/${userId}`)
+      .set('X-User-Id', userId)
+      .send({ phone: '+5511987654321', cnh: null })
+      .expect(200);
+
+    expect(patched.body).toMatchObject({
+      phone: '+5511987654321',
+      cnh: null,
+      document: '52998224725',
+    });
+
+    const vehicle = await request(app.getHttpServer())
+      .post('/v1/vehicles')
+      .set('X-User-Id', userId)
+      .send({ brand: 'Toyota', model: 'Corolla', year: 2022 })
+      .expect(201);
+
+    await request(app.getHttpServer())
+      .delete(`/v1/users/${userId}`)
+      .set('X-User-Id', userId)
+      .expect(204);
+
+    await request(app.getHttpServer()).get(`/v1/users/${userId}`).expect(404);
+    const vehicleGone = await prisma.vehicle.findUnique({
+      where: { id: vehicle.body.id },
+    });
+    expect(vehicleGone).toBeNull();
+  });
+
+  it('rejects unauthorized, forbidden, invalid and duplicate profile updates', async () => {
+    const owner = await request(app.getHttpServer())
+      .post('/v1/users')
+      .send({ email: `owner-${Date.now()}@example.com` })
+      .expect(201);
+    createdIds.push(owner.body.id);
+
+    const other = await request(app.getHttpServer())
+      .post('/v1/users')
+      .send({ email: `other-${Date.now()}@example.com` })
+      .expect(201);
+    createdIds.push(other.body.id);
+
+    await request(app.getHttpServer())
+      .put(`/v1/users/${owner.body.id}`)
+      .send({ name: 'No Auth' })
+      .expect(401);
+
+    const forbidden = await request(app.getHttpServer())
+      .patch(`/v1/users/${owner.body.id}`)
+      .set('X-User-Id', other.body.id)
+      .send({ name: 'Hack' })
+      .expect(403);
+
+    expect(forbidden.body).toMatchObject({
+      statusCode: 403,
+      code: API_ERROR_CODE.FORBIDDEN,
+    });
+
+    await request(app.getHttpServer())
+      .patch(`/v1/users/${owner.body.id}`)
+      .set('X-User-Id', owner.body.id)
+      .send({ document: '11111111111', documentType: 'CPF' })
+      .expect(400);
+
+    await request(app.getHttpServer())
+      .patch(`/v1/users/${owner.body.id}`)
+      .set('X-User-Id', owner.body.id)
+      .send({
+        document: '52998224725',
+        documentType: 'CPF',
+        password: 'nope',
+      })
+      .expect(400);
+
+    await request(app.getHttpServer())
+      .patch(`/v1/users/${owner.body.id}`)
+      .set('X-User-Id', owner.body.id)
+      .send({ document: '52998224725', documentType: 'CPF' })
+      .expect(200);
+
+    const duplicate = await request(app.getHttpServer())
+      .patch(`/v1/users/${other.body.id}`)
+      .set('X-User-Id', other.body.id)
+      .send({ document: '52998224725', documentType: 'CPF' })
+      .expect(409);
+
+    expect(duplicate.body).toMatchObject({
+      statusCode: 409,
+      code: API_ERROR_CODE.CONFLICT,
+      message: 'Document already in use',
+    });
+  });
 });
