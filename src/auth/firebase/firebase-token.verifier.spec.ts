@@ -41,6 +41,8 @@ describe('FirebaseTokenVerifierService', () => {
     verifyIdToken.mockResolvedValue({
       uid: 'firebase-uid',
       email: 'user@example.com',
+      email_verified: true,
+      name: 'Ada',
       aud: 'autotrack-dev',
     });
 
@@ -55,10 +57,15 @@ describe('FirebaseTokenVerifierService', () => {
     });
     expect(user).toEqual({
       userId: 'firebase-uid',
+      firebaseUid: 'firebase-uid',
       email: 'user@example.com',
+      emailVerified: true,
+      name: 'Ada',
       claims: {
         uid: 'firebase-uid',
         email: 'user@example.com',
+        email_verified: true,
+        name: 'Ada',
         aud: 'autotrack-dev',
       },
     });

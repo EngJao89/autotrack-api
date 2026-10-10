@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   ForbiddenException,
   NotFoundException,
@@ -21,6 +22,7 @@ describe('UsersService', () => {
 
   const user = {
     id: 'user_1',
+    firebaseUid: null as string | null,
     email: 'user@example.com',
     name: 'Example User',
     cnh: null,
@@ -64,6 +66,100 @@ describe('UsersService', () => {
     });
     expect(result).toEqual(user);
     expect(result).not.toHaveProperty('password');
+  });
+
+  it('bootstraps a new local profile from Firebase identity', async () => {
+    prisma.user.findUnique.mockResolvedValue(null);
+    prisma.user.create.mockResolvedValue({
+      ...user,
+      firebaseUid: 'firebase-uid',
+      name: 'Ada',
+    });
+
+    const result = await service.bootstrapFromFirebase({
+      firebaseUid: 'firebase-uid',
+      email: 'user@example.com',
+      name: 'Ada',
+    });
+
+    expect(result.created).toBe(true);
+    expect(prisma.user.create).toHaveBeenCalledWith({
+      data: {
+        firebaseUid: 'firebase-uid',
+        email: 'user@example.com',
+        name: 'Ada',
+      },
+    });
+  });
+
+  it('syncs existing profile by firebaseUid without recreating', async () => {
+    prisma.user.findUnique.mockResolvedValueOnce({
+      ...user,
+      firebaseUid: 'firebase-uid',
+    });
+
+    const result = await service.bootstrapFromFirebase({
+      firebaseUid: 'firebase-uid',
+      email: 'user@example.com',
+    });
+
+    expect(result.created).toBe(false);
+    expect(prisma.user.create).not.toHaveBeenCalled();
+  });
+
+  it('links local user with same email and null firebaseUid', async () => {
+    prisma.user.findUnique
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(user);
+    prisma.user.update.mockResolvedValue({
+      ...user,
+      firebaseUid: 'firebase-uid',
+    });
+
+    const result = await service.bootstrapFromFirebase({
+      firebaseUid: 'firebase-uid',
+      email: 'user@example.com',
+    });
+
+    expect(result.created).toBe(false);
+    expect(prisma.user.update).toHaveBeenCalledWith({
+      where: { id: 'user_1' },
+      data: { firebaseUid: 'firebase-uid' },
+    });
+  });
+
+  it('rejects email collision with another firebaseUid', async () => {
+    prisma.user.findUnique
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({
+        ...user,
+        firebaseUid: 'other-firebase-uid',
+      });
+
+    await expect(
+      service.bootstrapFromFirebase({
+        firebaseUid: 'firebase-uid',
+        email: 'user@example.com',
+      }),
+    ).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it('rejects bootstrap without email claim', async () => {
+    await expect(
+      service.bootstrapFromFirebase({ firebaseUid: 'firebase-uid' }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('gets me by firebaseUid', async () => {
+    prisma.user.findUnique.mockResolvedValue({
+      ...user,
+      firebaseUid: 'firebase-uid',
+    });
+
+    await expect(service.getMe('firebase-uid')).resolves.toMatchObject({
+      id: 'user_1',
+      firebaseUid: 'firebase-uid',
+    });
   });
 
   it('throws conflict when email is duplicated', async () => {

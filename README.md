@@ -119,15 +119,18 @@ Códigos estáveis principais: `VALIDATION_ERROR`, `UNAUTHORIZED`, `NOT_FOUND`, 
 
 ## Auth (Firebase)
 
-A API **não** armazena senha nem emite JWT próprio. O app Expo autentica no Firebase e envia o ID Token:
+A API **não** armazena senha nem emite JWT próprio. O app Expo autentica no Firebase (Google ou e-mail/senha) e envia o ID Token:
 
 ```http
 Authorization: Bearer <firebase-id-token>
 ```
 
+Provedores e políticas: [`docs/firebase-providers.md`](docs/firebase-providers.md) · [`docs/auth-and-user-lifecycle.md`](docs/auth-and-user-lifecycle.md).
+
 | Método | Rota | Descrição |
 |---|---|---|
-| `GET` | `/v1/auth/me` | Retorna `userId` (UID Firebase) e `email` do token |
+| `GET` | `/v1/auth/me` | Claims do token (`firebaseUid`, `email`, `emailVerified`) + `localUserId` se já vinculado |
+| `POST` | `/v1/auth/bootstrap` | Cria ou sincroniza o perfil local pelo `firebaseUid` do token (sem body) |
 
 Variáveis no `.env` (service account; nunca versionar valores reais):
 
@@ -145,6 +148,10 @@ curl http://localhost:3333/v1/auth/me
 
 # token válido → 200
 curl http://localhost:3333/v1/auth/me \
+  -H "Authorization: Bearer <firebase-id-token>"
+
+# primeira autenticação → cria perfil local
+curl -X POST http://localhost:3333/v1/auth/bootstrap \
   -H "Authorization: Bearer <firebase-id-token>"
 ```
 
@@ -172,15 +179,17 @@ Para proteger outros endpoints: `@UseGuards(AuthGuard)` + `@ApiBearerAuth('beare
 
 ## Users
 
-Perfil local (sem senha). Decisões de auth/ciclo de vida: [`docs/auth-and-user-lifecycle.md`](docs/auth-and-user-lifecycle.md).
+Perfil local (sem senha), vinculado por `firebaseUid`. Decisões: [`docs/auth-and-user-lifecycle.md`](docs/auth-and-user-lifecycle.md).
 
 | Método | Rota | Auth | Descrição |
 |---|---|---|---|
-| `POST` | `/v1/users` | — | Cria usuário (`email` obrigatório, `name` opcional) |
+| `POST` | `/v1/auth/bootstrap` | Bearer | Cria/sincroniza perfil a partir do Firebase |
+| `GET` | `/v1/users/me` | Bearer | Perfil local do token (`404` se não bootstrapped) |
+| `POST` | `/v1/users` | — | Bootstrap local/dev (`email` obrigatório, `name` opcional) |
 | `GET` | `/v1/users/:id` | — | Busca usuário por id |
-| `PUT` | `/v1/users/:id` | `X-User-Id` | Substitui perfil mutável (omitidos → `null`) |
-| `PATCH` | `/v1/users/:id` | `X-User-Id` | Atualização parcial |
-| `DELETE` | `/v1/users/:id` | `X-User-Id` | Exclusão física (+ cascade de veículos) |
+| `PUT` | `/v1/users/:id` | Bearer ou `X-User-Id` | Substitui perfil mutável (omitidos → `null`) |
+| `PATCH` | `/v1/users/:id` | Bearer ou `X-User-Id` | Atualização parcial |
+| `DELETE` | `/v1/users/:id` | Bearer ou `X-User-Id` | Exclusão física (+ cascade de veículos) |
 
 Campos de perfil: `name`, `cnh`, `document`, `documentType` (`CPF`/`CNPJ`), `phone`.
 
@@ -203,10 +212,12 @@ curl -X PATCH http://localhost:3333/v1/users/<id> \
   -d '{"phone":"+5511987654321"}'
 ```
 
+- `firebaseUid` único (somente leitura na API; preenchido no bootstrap)
 - E-mail único; `document` e `cnh` únicos quando preenchidos; `phone` não é único
 - Documentos/CNH/telefone são normalizados (só dígitos / E.164) e validados
-- `password` / secrets são rejeitados
+- `password` / `firebaseUid` em body / secrets são rejeitados
 - Outro usuário → `403`; sem contexto → `401`; não encontrado → `404`
+- Colisão de e-mail com outra identidade Firebase → `409`
 - `DELETE` remove veículos/manutenções relacionados por CASCADE
 
 ## Vehicles

@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { AuthModule } from '../auth/auth.module';
 import { UserContextGuard } from '../common/user-context/user-context.guard';
 import { PrismaModule } from '../prisma/prisma.module';
 import { UsersModule } from '../users/users.module';
@@ -8,7 +9,7 @@ import { MaintenancesService } from './maintenances.service';
 import { VehicleMaintenancesController } from './vehicle-maintenances.controller';
 
 @Module({
-  imports: [PrismaModule, UsersModule, VehiclesModule],
+  imports: [PrismaModule, UsersModule, VehiclesModule, AuthModule],
   controllers: [VehicleMaintenancesController, MaintenancesController],
   providers: [MaintenancesService, UserContextGuard],
   exports: [MaintenancesService],

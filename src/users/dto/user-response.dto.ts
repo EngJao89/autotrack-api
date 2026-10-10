@@ -4,6 +4,14 @@ export class UserResponseDto {
   @ApiProperty({ example: 'clx123abc' })
   id!: string;
 
+  @ApiPropertyOptional({
+    example: 'firebase-uid-123',
+    nullable: true,
+    description:
+      'UID Firebase vinculado (somente leitura; nunca aceito em DTOs mutáveis)',
+  })
+  firebaseUid!: string | null;
+
   @ApiProperty({ example: 'user@example.com' })
   email!: string;
 
