@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- Linked Firebase identity to local User via `firebaseUid`, `POST /v1/auth/bootstrap` and `GET /v1/users/me` ([ATP-30])
+- Documented Firebase Google + Email/Password providers and identity policies ([ATP-30]/[ATP-31])
 - Configured isolated unit/E2E test suite with helpers, fixtures and coverage scripts ([ATP-17])
 - Extended User profile with CNH/document/phone and PUT/PATCH/DELETE operations ([ATP-29])
 - Documented auth/user lifecycle decisions in `docs/auth-and-user-lifecycle.md` ([ATP-29])
@@ -14,6 +16,7 @@ All notable changes to this project will be documented in this file.
 - Added Firebase Auth module with Bearer validation and `GET /v1/auth/me` ([ATP-21])
 
 ### Changed
+- `UserContextGuard` prefers Bearer Firebase token (lookup by `firebaseUid`) and keeps `X-User-Id` as local-only fallback ([ATP-30])
 - Unified API error responses to `{ statusCode, code, message, errors?, requestId }` ([ATP-14])
 - Aligned Maintenance Prisma fields to the English API contract (`type`, `serviceDate`, `costCents`, …) ([ATP-28])
 - Aligned Vehicle Prisma fields to the English API contract (`brand`, `model`, `year`, `licensePlate`, …) ([ATP-26])

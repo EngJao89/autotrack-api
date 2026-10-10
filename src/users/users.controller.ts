@@ -12,6 +12,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import {
+  ApiBearerAuth,
   ApiConflictResponse,
   ApiCreatedResponse,
   ApiForbiddenResponse,
@@ -23,6 +24,9 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { AuthGuard } from '../auth/guards/auth.guard';
+import type { AuthenticatedUser } from '../auth/interfaces/authenticated-user';
 import { HttpErrorResponseDto } from '../common/dto/http-error.dto';
 import { CurrentUserId } from '../common/user-context/current-user-id.decorator';
 import { UserContextGuard } from '../common/user-context/user-context.guard';
@@ -41,7 +45,8 @@ export class UsersController {
   @ApiOperation({
     summary: 'Cria um usuário',
     description:
-      'Bootstrap local/desenvolvimento. Não aceite senha ou secrets neste contrato.',
+      'Bootstrap local/desenvolvimento. Não aceite senha ou secrets neste contrato. ' +
+      'Em produção o app Expo deve usar POST /v1/auth/bootstrap com Bearer Firebase.',
   })
   @ApiCreatedResponse({ type: UserResponseDto })
   @ApiConflictResponse({
@@ -50,6 +55,21 @@ export class UsersController {
   })
   create(@Body() dto: CreateUserDto): Promise<UserResponseDto> {
     return this.usersService.create(dto);
+  }
+
+  @Get('me')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth('bearer')
+  @ApiOperation({
+    summary: 'Retorna o perfil local do usuário autenticado',
+    description:
+      'Resolve o perfil pelo firebaseUid do token. Retorna 404 se ainda não houve bootstrap.',
+  })
+  @ApiOkResponse({ type: UserResponseDto })
+  @ApiUnauthorizedResponse({ type: HttpErrorResponseDto })
+  @ApiNotFoundResponse({ type: HttpErrorResponseDto })
+  me(@CurrentUser() user: AuthenticatedUser): Promise<UserResponseDto> {
+    return this.usersService.getMe(user.firebaseUid);
   }
 
   @Get(':id')
@@ -65,16 +85,18 @@ export class UsersController {
 
   @Put(':id')
   @UseGuards(UserContextGuard)
+  @ApiBearerAuth('bearer')
   @ApiHeader({
     name: 'X-User-Id',
-    required: true,
-    description: 'Adapter local de desenvolvimento (desabilitado em production)',
+    required: false,
+    description:
+      'Adapter local de desenvolvimento (desabilitado em production). Preferir Bearer Firebase.',
   })
   @ApiOperation({
     summary: 'Substitui o perfil do usuário (PUT)',
     description:
       'Substituição completa dos campos mutáveis (name, cnh, document, documentType, phone). ' +
-      'Campos omitidos viram null. Email/id/timestamps não são aceitos. Somente o próprio usuário.',
+      'Campos omitidos viram null. Email/id/firebaseUid/timestamps não são aceitos. Somente o próprio usuário.',
   })
   @ApiOkResponse({ type: UserResponseDto })
   @ApiUnauthorizedResponse({ type: HttpErrorResponseDto })
@@ -91,10 +113,12 @@ export class UsersController {
 
   @Patch(':id')
   @UseGuards(UserContextGuard)
+  @ApiBearerAuth('bearer')
   @ApiHeader({
     name: 'X-User-Id',
-    required: true,
-    description: 'Adapter local de desenvolvimento (desabilitado em production)',
+    required: false,
+    description:
+      'Adapter local de desenvolvimento (desabilitado em production). Preferir Bearer Firebase.',
   })
   @ApiOperation({
     summary: 'Atualiza parcialmente o perfil (PATCH)',
@@ -117,10 +141,12 @@ export class UsersController {
   @Delete(':id')
   @UseGuards(UserContextGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiBearerAuth('bearer')
   @ApiHeader({
     name: 'X-User-Id',
-    required: true,
-    description: 'Adapter local de desenvolvimento (desabilitado em production)',
+    required: false,
+    description:
+      'Adapter local de desenvolvimento (desabilitado em production). Preferir Bearer Firebase.',
   })
   @ApiOperation({
     summary: 'Remove o usuário (DELETE físico)',

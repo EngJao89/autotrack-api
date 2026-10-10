@@ -16,10 +16,15 @@ export class FirebaseTokenVerifierService implements FirebaseTokenVerifier {
   async verifyIdToken(token: string): Promise<AuthenticatedUser> {
     try {
       const decoded = await getAuth(this.getApp()).verifyIdToken(token);
+      const name =
+        typeof decoded.name === 'string' ? decoded.name : undefined;
 
       return {
         userId: decoded.uid,
+        firebaseUid: decoded.uid,
         email: decoded.email,
+        emailVerified: decoded.email_verified === true,
+        name,
         claims: { ...decoded },
       };
     } catch {

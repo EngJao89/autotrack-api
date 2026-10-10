@@ -31,7 +31,9 @@ describe('AuthGuard', () => {
   it('accepts a valid bearer token and attaches the user', async () => {
     const user = {
       userId: 'firebase-uid',
+      firebaseUid: 'firebase-uid',
       email: 'user@example.com',
+      emailVerified: true,
       claims: { uid: 'firebase-uid' },
     };
     tokenVerifier.verifyIdToken.mockResolvedValue(user);

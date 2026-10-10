@@ -18,12 +18,16 @@ export function createFirebaseTokenVerifierMock(
 }
 
 export function createAuthenticatedUser(
-  overrides?: Partial<AuthenticatedUser>,
+  overrides: Partial<AuthenticatedUser> = {},
 ): AuthenticatedUser {
+  const firebaseUid = overrides.firebaseUid ?? overrides.userId ?? 'firebase-uid';
+
   return {
-    userId: 'firebase-uid',
     email: 'user@example.com',
-    claims: { uid: 'firebase-uid' },
+    emailVerified: true,
+    claims: { uid: firebaseUid },
     ...overrides,
+    userId: overrides.userId ?? firebaseUid,
+    firebaseUid: overrides.firebaseUid ?? firebaseUid,
   };
 }
