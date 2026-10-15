@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- Added Architecture Decision Records under `docs/adr/` (template, process, backlog and three priority ADRs) ([ATP-4])
 - Linked Firebase identity to local User via `firebaseUid`, `POST /v1/auth/bootstrap` and `GET /v1/users/me` ([ATP-30])
 - Documented Firebase Google + Email/Password providers and identity policies ([ATP-30]/[ATP-31])
 - Configured isolated unit/E2E test suite with helpers, fixtures and coverage scripts ([ATP-17])
