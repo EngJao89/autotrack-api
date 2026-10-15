@@ -6,6 +6,8 @@ API REST em **NestJS** + **TypeScript** para um sistema de rastreamento veicular
 
 > Status atual: Prisma + PostgreSQL; Auth Firebase; Vehicles/Maintenance; validação/erros padronizados; health check; pronto para demo no Render.
 
+Decisões de arquitetura (ADRs): [`docs/adr/`](docs/adr/README.md).
+
 ## Stack
 
 | Tecnologia | Uso |
@@ -533,6 +535,8 @@ npm run commit          # commit assistido (Commitizen)
 ```
 
 ## Arquitetura
+
+Decisões registradas em [`docs/adr/`](docs/adr/README.md) (template, processo e ADRs prioritários: Firebase/perfil local, PostgreSQL/Prisma, fronteira API/Mobile). Guias de implementação continuam em `docs/*.md` e não duplicam os ADRs.
 
 Estrutura inicial gerada pelo NestJS, com organização modular:
 
