@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- Added local Notion CLI tooling to list tasks, show details/acceptance criteria, and suggest or create git branches (`scripts/notion/`) ([ATP-35])
 - Added Architecture Decision Records under `docs/adr/` (template, process, backlog and three priority ADRs) ([ATP-4])
 - Linked Firebase identity to local User via `firebaseUid`, `POST /v1/auth/bootstrap` and `GET /v1/users/me` ([ATP-30])
 - Documented Firebase Google + Email/Password providers and identity policies ([ATP-30]/[ATP-31])
