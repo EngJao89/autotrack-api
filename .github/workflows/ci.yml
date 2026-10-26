@@ -64,6 +64,9 @@ jobs:
       - name: Unit tests
         run: npm run test -- --runInBand
 
+      - name: Notion tooling tests
+        run: npm run notion:test
+
       - name: Unit coverage
         run: npm run test:cov -- --runInBand --coverageReporters=text-summary
 

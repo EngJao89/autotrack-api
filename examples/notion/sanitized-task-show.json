@@ -1,0 +1,29 @@
+{
+  "taskId": "ATP-35",
+  "title": "Configurar integração Notion no autotrack-api: consultar tasks, detalhes e gerar branch",
+  "status": "Not started",
+  "tipo": "Setup",
+  "priority": "Média",
+  "estimate": "M",
+  "tags": ["Git", "TypeScript", "Arquitetura", "Testes", "Segurança"],
+  "url": "https://www.notion.so/…(redacted)",
+  "missingProperties": [],
+  "acceptanceCriteria": [
+    "[ ] Configuração Mobile revisada e diferenças necessárias para a API registradas.",
+    "[ ] Integração configurada no contexto correto do autotrack-api.",
+    "[ ] Consulta retorna tasks autorizadas e seus campos disponíveis.",
+    "[ ] Uma task pode ser selecionada para leitura de descrição e critérios de aceite.",
+    "[ ] Tasks sem identificação clara de repositório não são atribuídas automaticamente à API.",
+    "[ ] Branch usa ID oficial e slug válido, inclusive para títulos com acentos.",
+    "[ ] Sugestão de nome e criação efetiva de branch são diferenciadas e documentadas.",
+    "[ ] Quando houver criação Git, base e repositório são verificados e alterações locais preservadas.",
+    "[ ] Branch existente, ID ausente, página sem acesso e falha de conexão têm tratamento claro.",
+    "[ ] Consultas não alteram status, criam PR, fazem push ou merge implicitamente.",
+    "[ ] Credenciais não aparecem no código versionado, logs ou respostas HTTP.",
+    "[ ] Testes aplicáveis cobrem mapeamento e geração de branch sem escrita real nos testes automatizados.",
+    "[ ] Lint, typecheck e testes pertinentes passam conforme scripts existentes.",
+    "[ ] README ou docs/notion-task-workflow.md explica instalação, conexão, uso e limitações.",
+    "[ ] PR e CHANGELOG registram a entrega."
+  ],
+  "_note": "Exemplo sanitizado — sem tokens. Valores alinhados ao card ATP-35; evidência viva via `npm run notion:show -- ATP-35` com NOTION_TOKEN local."
+}

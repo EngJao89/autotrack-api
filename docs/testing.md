@@ -5,9 +5,10 @@
 | Layer | Location | Notes |
 |---|---|---|
 | Unit | `src/**/*.spec.ts` | Mock Prisma and Firebase. No network calls. |
+| Notion tooling | `scripts/notion/*.test.mjs` | Pure helpers (`node --test`); no Notion network. |
 | E2E | `test/**/*.e2e-spec.ts` | Real Nest HTTP app via Supertest + isolated DB. |
 
-Out of scope: load/stress, pentest, UI, real Firebase/email/push, staging data dumps.
+Out of scope: load/stress, pentest, UI, real Firebase/email/push/Notion API, staging data dumps.
 
 ## Isolation after PostgreSQL migration
 
@@ -32,11 +33,12 @@ E2E isolation is therefore:
 ## Commands
 
 ```bash
-npm run test        # unit
+npm run test        # unit (Jest)
+npm run notion:test # tooling Notion (node:test)
 npm run test:watch
 npm run test:cov    # coverage in ./coverage
 npm run test:e2e
-npm run test:all    # unit then e2e (runInBand)
+npm run test:all    # unit + notion + e2e (runInBand)
 ```
 
 ## Quality rules

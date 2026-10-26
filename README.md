@@ -514,6 +514,22 @@ test/
 
 Firebase **nunca** é chamado de verdade nos testes — o verifier é mockado via `FIREBASE_TOKEN_VERIFIER`.
 
+## Notion (tooling local de tasks)
+
+CLI de desenvolvedor para listar tasks do board, ver detalhes/critérios de aceite e **sugerir** ou **criar** branch Git local. **Não** faz parte do runtime Nest nem expõe rotas HTTP.
+
+Guia: [`docs/notion-task-workflow.md`](docs/notion-task-workflow.md) · convenções Notion↔GitHub: [`docs/notion-github.md`](docs/notion-github.md).
+
+```bash
+npm run notion:list
+npm run notion:show -- ATP-XX
+npm run notion:suggest-branch -- ATP-XX
+npm run notion:create-branch -- ATP-XX   # local only; sem push / sem escrever no Notion
+npm run notion:test
+```
+
+Credenciais (`NOTION_TOKEN`, `NOTION_DATABASE_ID`) só no `.env` local — documentadas em `.env.example`.
+
 ## Scripts úteis
 
 ```bash
@@ -524,10 +540,13 @@ npm run start:render    # migrate deploy + start (Render)
 npm run lint            # analisa o código com Oxlint
 npm run typecheck       # verifica tipagem TypeScript
 npm run format          # formata com Prettier
-npm run test            # testes unitários
+npm run test            # testes unitários (Jest)
+npm run notion:test     # testes do tooling Notion (node:test)
 npm run test:e2e        # testes end-to-end (DB isolado)
 npm run test:cov        # cobertura unitária
-npm run test:all        # unit + e2e
+npm run test:all        # unit + notion + e2e
+npm run notion:list     # lista tasks do board Notion
+npm run notion:show     # detalhes + critérios de aceite
 npm run prisma:migrate  # migrations de desenvolvimento
 npm run prisma:generate # gera o Prisma Client
 npm run prisma:studio   # abre o Prisma Studio
@@ -550,6 +569,7 @@ src/
 ├── app.module.ts
 ├── prisma/
 └── generated/prisma/
+scripts/notion/             # CLI Notion → task → branch (dev tooling)
 prisma/
 ├── schema.prisma
 └── migrations/
