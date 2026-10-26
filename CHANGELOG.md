@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- Documented plan for TypeScript types/client generation from OpenAPI (`docs/openapi-client-plan.md`), including `/api/docs-json` and tool recommendation ([ATP-12])
 - Added local Notion CLI tooling to list tasks, show details/acceptance criteria, and suggest or create git branches (`scripts/notion/`) ([ATP-35])
 - Added Architecture Decision Records under `docs/adr/` (template, process, backlog and three priority ADRs) ([ATP-4])
 - Linked Firebase identity to local User via `firebaseUid`, `POST /v1/auth/bootstrap` and `GET /v1/users/me` ([ATP-30])
