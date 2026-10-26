@@ -17,7 +17,7 @@ O AutoTrack é composto por um backend NestJS e um app Expo/React Native. É nec
 - Prefixo público versionado **`/v1`**; breaking changes planejadas em `/v2`.
 - OpenAPI/Swagger publicado pela API (`/api/docs`).
 - Auth: Firebase no client; API só valida Bearer (ver [ADR 0001](0001-firebase-identity-and-local-profile.md)).
-- Cliente TypeScript gerado a partir do OpenAPI **ainda não é decisão aceita** — fica no backlog de ADRs.
+- Cliente TypeScript gerado a partir do OpenAPI **ainda não é decisão aceita** — plano de adoção em [`../openapi-client-plan.md`](../openapi-client-plan.md) (ATP-12); ADR formal na implementação.
 - Estado/navegação do mobile são decisões do repositório mobile (backlog).
 
 ## Alternativas consideradas
@@ -59,13 +59,14 @@ Já adotado na API: prefixo `/v1`, Swagger, módulos Users/Vehicles/Maintenance,
 Pendente (fora deste ADR / backlog):
 
 - Integração completa Expo ↔ API em produção
-- Geração de client TypeScript a partir do OpenAPI
+- Geração de client TypeScript a partir do OpenAPI — ver [`../openapi-client-plan.md`](../openapi-client-plan.md) (ATP-12)
 - Estratégia de state management e navegação no mobile
 
 ## Referências
 
 - README da API — seções Auth, Users, OpenAPI, Arquitetura
 - `src/config/swagger.ts`, `src/main.ts` (prefixo `v1`)
+- [Plano OpenAPI client (ATP-12)](../openapi-client-plan.md)
 - [ADR 0001 — Identidade Firebase e perfil local](0001-firebase-identity-and-local-profile.md)
-- Tasks: ATP-15 (Swagger), ATP-21/30 (Auth), ATP-25/26/28 (domínio), ATP-4 (este processo)
+- Tasks: ATP-15 (Swagger), ATP-12 (plano client), ATP-21/30 (Auth), ATP-25/26/28 (domínio), ATP-4 (este processo)
 - Repositório consumidor: `autotrack-mobile` (referência cruzada ao índice ADR desta API)

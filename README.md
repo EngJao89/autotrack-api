@@ -339,6 +339,10 @@ A UI do Swagger fica em:
 
 - Local: [http://localhost:3333/api/docs](http://localhost:3333/api/docs)
 
+Documento OpenAPI em JSON (para geradores / inspeção):
+
+- Local: [http://localhost:3333/api/docs-json](http://localhost:3333/api/docs-json)
+
 Controle por ambiente:
 
 - Habilitada por padrão quando `NODE_ENV !== production`
@@ -346,9 +350,12 @@ Controle por ambiente:
 
 Tags de domínio já registradas: `Auth`, `Users`, `Vehicles`, `Maintenance` (+ `Health`).
 
+Plano para tipos/cliente TypeScript no mobile (ATP-12): [`docs/openapi-client-plan.md`](./docs/openapi-client-plan.md). Ainda **não** há gerador instalado nem client versionado.
+
 ```bash
 npm run start:dev
 # abra http://localhost:3333/api/docs
+# JSON: http://localhost:3333/api/docs-json
 ```
 
 ## Docker Compose (API + PostgreSQL)

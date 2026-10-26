@@ -41,7 +41,7 @@ Itens identificados, **separados** das decisões aceitas. Registrar só quando a
 | Arquitetura feature-first / módulos no mobile | Escopo mobile |
 | Estratégia de state management (mobile) | Escopo mobile |
 | Navegação (mobile) | Escopo mobile |
-| Geração de client TypeScript a partir do OpenAPI | Transversal; ainda não adotado |
+| Geração de client TypeScript a partir do OpenAPI | Transversal; plano em [`../openapi-client-plan.md`](../openapi-client-plan.md) (ATP-12); ADR formal na implementação |
 | Soft-delete / anonimização LGPD | API; lifecycle menciona como futuro |
 | Exigir `email_verified` em operações sensíveis | API; MVP ainda permite não verificado |
 
