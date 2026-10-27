@@ -23,6 +23,8 @@ Documentos de implementação (guias), **não** são ADRs — os ADRs apontam pa
 | [`docs/firebase-providers.md`](../firebase-providers.md) | Provedores Firebase e env Admin SDK |
 | [`docs/testing.md`](../testing.md) | Pirâmide de testes e E2E Postgres |
 | [`CHANGELOG.md`](../../CHANGELOG.md) | Histórico de entregas (incl. SQLite → PostgreSQL) |
+| [`docs/api-mobile-boundary.md`](../api-mobile-boundary.md) | Fronteira operacional API ↔ Mobile (ATP-13) |
+| [`docs/openapi-client-plan.md`](../openapi-client-plan.md) | Plano de geração de client TS (ATP-12) |
 
 ## Índice de ADRs
 
