@@ -6,7 +6,8 @@ API REST em **NestJS** + **TypeScript** para um sistema de rastreamento veicular
 
 > Status atual: Prisma + PostgreSQL; Auth Firebase; Vehicles/Maintenance; validação/erros padronizados; health check; pronto para demo no Render.
 
-Decisões de arquitetura (ADRs): [`docs/adr/`](docs/adr/README.md).
+Decisões de arquitetura (ADRs): [`docs/adr/`](docs/adr/README.md).  
+Fronteira de integração API ↔ Mobile (ATP-13): [`docs/api-mobile-boundary.md`](docs/api-mobile-boundary.md).
 
 ## Stack
 
@@ -562,7 +563,7 @@ npm run commit          # commit assistido (Commitizen)
 
 ## Arquitetura
 
-Decisões registradas em [`docs/adr/`](docs/adr/README.md) (template, processo e ADRs prioritários: Firebase/perfil local, PostgreSQL/Prisma, fronteira API/Mobile). Guias de implementação continuam em `docs/*.md` e não duplicam os ADRs.
+Decisões registradas em [`docs/adr/`](docs/adr/README.md) (template, processo e ADRs prioritários: Firebase/perfil local, PostgreSQL/Prisma, fronteira API/Mobile). Guia operacional da fronteira com o app: [`docs/api-mobile-boundary.md`](docs/api-mobile-boundary.md) (ATP-13). Demais guias em `docs/*.md` não duplicam os ADRs.
 
 Estrutura inicial gerada pelo NestJS, com organização modular:
 

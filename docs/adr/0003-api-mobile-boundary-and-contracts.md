@@ -64,9 +64,10 @@ Pendente (fora deste ADR / backlog):
 
 ## Referências
 
+- [Guia operacional da fronteira (ATP-13)](../api-mobile-boundary.md) — matriz, fluxos, lacunas e rastreabilidade
 - README da API — seções Auth, Users, OpenAPI, Arquitetura
 - `src/config/swagger.ts`, `src/main.ts` (prefixo `v1`)
 - [Plano OpenAPI client (ATP-12)](../openapi-client-plan.md)
 - [ADR 0001 — Identidade Firebase e perfil local](0001-firebase-identity-and-local-profile.md)
-- Tasks: ATP-15 (Swagger), ATP-12 (plano client), ATP-21/30 (Auth), ATP-25/26/28 (domínio), ATP-4 (este processo)
+- Tasks: ATP-15 (Swagger), ATP-13 (fronteira), ATP-12 (plano client), ATP-21/30 (Auth), ATP-25/26/28 (domínio), ATP-4 (este processo)
 - Repositório consumidor: `autotrack-mobile` (referência cruzada ao índice ADR desta API)
