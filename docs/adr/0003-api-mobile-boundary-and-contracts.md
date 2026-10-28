@@ -65,6 +65,7 @@ Pendente (fora deste ADR / backlog):
 ## Referências
 
 - [Guia operacional da fronteira (ATP-13)](../api-mobile-boundary.md) — matriz, fluxos, lacunas e rastreabilidade
+- [Contratos REST e estratégia de dados (ATP-2)](../api-contracts-and-data-strategy.md)
 - README da API — seções Auth, Users, OpenAPI, Arquitetura
 - `src/config/swagger.ts`, `src/main.ts` (prefixo `v1`)
 - [Plano OpenAPI client (ATP-12)](../openapi-client-plan.md)

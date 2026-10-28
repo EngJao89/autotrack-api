@@ -66,6 +66,7 @@ Não há rollback planejado para SQLite.
 
 ## Referências
 
+- [Contratos REST e estratégia de dados (ATP-2)](../api-contracts-and-data-strategy.md)
 - [`docs/testing.md`](../testing.md) — isolamento E2E pós-migração
 - `prisma/schema.prisma`, `prisma/migrations/`, `docker-compose.yml`, `render.yaml`
 - `src/prisma/prisma.service.ts` (`@prisma/adapter-pg`)

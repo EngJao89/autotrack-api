@@ -11,6 +11,7 @@ Este documento aprova a **fronteira**, os **fluxos de referência** e o **plano 
 **Não** significa que todas as jornadas Mobile↔API estão implementadas ponta a ponta. Fechar ATP-13 **não** é “integração completa entregue”.
 
 Decisão de princípio (ADR Aceito): [ADR 0003 — Fronteira API/Mobile e contratos](./adr/0003-api-mobile-boundary-and-contracts.md).  
+Contratos e persistência (o que é transmitido/armazenado): [api-contracts-and-data-strategy.md](./api-contracts-and-data-strategy.md) (ATP-2).  
 Plano de tipos/cliente OpenAPI (não reescolhido aqui): [openapi-client-plan.md](./openapi-client-plan.md) (ATP-12).
 
 ---

@@ -24,6 +24,7 @@ Documentos de implementação (guias), **não** são ADRs — os ADRs apontam pa
 | [`docs/testing.md`](../testing.md) | Pirâmide de testes e E2E Postgres |
 | [`CHANGELOG.md`](../../CHANGELOG.md) | Histórico de entregas (incl. SQLite → PostgreSQL) |
 | [`docs/api-mobile-boundary.md`](../api-mobile-boundary.md) | Fronteira operacional API ↔ Mobile (ATP-13) |
+| [`docs/api-contracts-and-data-strategy.md`](../api-contracts-and-data-strategy.md) | Contratos REST `/v1` e estratégia de dados (ATP-2) |
 | [`docs/openapi-client-plan.md`](../openapi-client-plan.md) | Plano de geração de client TS (ATP-12) |
 
 ## Índice de ADRs
