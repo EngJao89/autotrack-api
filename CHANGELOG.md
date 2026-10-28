@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- Documented REST `/v1` contracts and data strategy baseline (`docs/api-contracts-and-data-strategy.md`) ([ATP-2])
 - Documented API ↔ Mobile integration boundary (`docs/api-mobile-boundary.md`) with responsibility matrix, flows and gaps ([ATP-13])
 - Documented plan for TypeScript types/client generation from OpenAPI (`docs/openapi-client-plan.md`), including `/api/docs-json` and tool recommendation ([ATP-12])
 - Added local Notion CLI tooling to list tasks, show details/acceptance criteria, and suggest or create git branches (`scripts/notion/`) ([ATP-35])
