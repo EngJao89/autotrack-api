@@ -10,7 +10,10 @@ import {
   Min,
   MinLength,
 } from 'class-validator';
-import { MAINTENANCE_TYPES } from '../maintenance.constants';
+import {
+  MAINTENANCE_STATUSES,
+  MAINTENANCE_TYPES,
+} from '../maintenance.constants';
 
 const trimString = ({ value }: { value: unknown }) =>
   typeof value === 'string' ? value.trim() : value;
@@ -24,6 +27,18 @@ export class CreateMaintenanceDto {
   @IsString()
   @IsIn([...MAINTENANCE_TYPES])
   type!: string;
+
+  @ApiPropertyOptional({
+    example: 'TODO',
+    enum: MAINTENANCE_STATUSES,
+    description:
+      'Estado do kanban. Default TODO em criações novas. Histórico migrado = DONE.',
+  })
+  @IsOptional()
+  @Transform(trimString)
+  @IsString()
+  @IsIn([...MAINTENANCE_STATUSES])
+  status?: (typeof MAINTENANCE_STATUSES)[number];
 
   @ApiPropertyOptional({ example: 'Troca de óleo e filtro' })
   @IsOptional()

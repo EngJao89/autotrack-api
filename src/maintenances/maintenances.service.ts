@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { VehiclesService } from '../vehicles/vehicles.service';
@@ -6,6 +10,10 @@ import { CreateMaintenanceDto } from './dto/create-maintenance.dto';
 import { ListMaintenancesQueryDto } from './dto/list-maintenances.query.dto';
 import { MaintenanceResponseDto } from './dto/maintenance-response.dto';
 import { UpdateMaintenanceDto } from './dto/update-maintenance.dto';
+import {
+  MAINTENANCE_STATUS_TRANSITIONS,
+  type MaintenanceStatusValue,
+} from './maintenance.constants';
 
 @Injectable()
 export class MaintenancesService {
@@ -25,6 +33,7 @@ export class MaintenancesService {
       data: {
         vehicleId,
         type: dto.type,
+        status: dto.status ?? 'TODO',
         description: dto.description,
         serviceDate: new Date(dto.serviceDate),
         odometerKm: dto.odometerKm,
@@ -43,8 +52,29 @@ export class MaintenancesService {
     await this.vehiclesService.findOneForUser(userId, vehicleId);
 
     return this.prisma.maintenance.findMany({
-      where: this.buildListWhere(vehicleId, query),
-      orderBy: { serviceDate: 'desc' },
+      where: this.buildListWhere({ vehicleId, userId: undefined }, query),
+      orderBy: this.buildOrderBy(query.status),
+    });
+  }
+
+  /**
+   * Lista manutenções de todos os veículos do usuário (ou um vehicleId).
+   * Evita contagens de kanban sobre páginas incompletas por veículo.
+   */
+  async findAllForUser(
+    userId: string,
+    query: ListMaintenancesQueryDto,
+  ): Promise<MaintenanceResponseDto[]> {
+    if (query.vehicleId) {
+      await this.vehiclesService.findOneForUser(userId, query.vehicleId);
+    }
+
+    return this.prisma.maintenance.findMany({
+      where: this.buildListWhere(
+        { vehicleId: query.vehicleId, userId },
+        query,
+      ),
+      orderBy: this.buildOrderBy(query.status),
     });
   }
 
@@ -60,12 +90,20 @@ export class MaintenancesService {
     id: string,
     dto: UpdateMaintenanceDto,
   ): Promise<MaintenanceResponseDto> {
-    await this.findOwnedOrThrow(userId, id);
+    const current = await this.findOwnedOrThrow(userId, id);
+
+    if (dto.status !== undefined && dto.status !== current.status) {
+      this.assertStatusTransition(
+        current.status as MaintenanceStatusValue,
+        dto.status as MaintenanceStatusValue,
+      );
+    }
 
     return this.prisma.maintenance.update({
       where: { id },
       data: {
         type: dto.type,
+        status: dto.status,
         description: dto.description,
         serviceDate:
           dto.serviceDate !== undefined
@@ -84,8 +122,34 @@ export class MaintenancesService {
     await this.prisma.maintenance.delete({ where: { id } });
   }
 
+  private assertStatusTransition(
+    from: MaintenanceStatusValue,
+    to: MaintenanceStatusValue,
+  ): void {
+    const allowed = MAINTENANCE_STATUS_TRANSITIONS[from] ?? [];
+    if (!allowed.includes(to)) {
+      throw new BadRequestException({
+        code: 'INVALID_STATUS_TRANSITION',
+        message: `Transição de status não permitida: ${from} → ${to}`,
+      });
+    }
+  }
+
+  private buildOrderBy(
+    status?: string,
+  ): Prisma.MaintenanceOrderByWithRelationInput[] {
+    // DONE: conclusion/service date descending; open items: planned date ascending.
+    if (status === 'DONE') {
+      return [{ serviceDate: 'desc' }, { id: 'asc' }];
+    }
+    if (status === 'TODO' || status === 'IN_PROGRESS') {
+      return [{ serviceDate: 'asc' }, { id: 'asc' }];
+    }
+    return [{ serviceDate: 'desc' }, { id: 'asc' }];
+  }
+
   private buildListWhere(
-    vehicleId: string,
+    scope: { vehicleId?: string; userId?: string },
     query: ListMaintenancesQueryDto,
   ): Prisma.MaintenanceWhereInput {
     const serviceDateFilter: Prisma.DateTimeFilter = {};
@@ -105,8 +169,10 @@ export class MaintenancesService {
     }
 
     return {
-      vehicleId,
+      ...(scope.vehicleId ? { vehicleId: scope.vehicleId } : {}),
+      ...(scope.userId ? { vehicle: { userId: scope.userId } } : {}),
       ...(query.type ? { type: query.type } : {}),
+      ...(query.status ? { status: query.status } : {}),
       ...(query.startDate || query.endDate
         ? { serviceDate: serviceDateFilter }
         : {}),

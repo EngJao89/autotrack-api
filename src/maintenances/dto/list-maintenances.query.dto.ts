@@ -8,7 +8,10 @@ import {
   IsString,
   Min,
 } from 'class-validator';
-import { MAINTENANCE_TYPES } from '../maintenance.constants';
+import {
+  MAINTENANCE_STATUSES,
+  MAINTENANCE_TYPES,
+} from '../maintenance.constants';
 
 export class ListMaintenancesQueryDto {
   @ApiPropertyOptional({ enum: MAINTENANCE_TYPES })
@@ -19,6 +22,30 @@ export class ListMaintenancesQueryDto {
   @IsString()
   @IsIn([...MAINTENANCE_TYPES])
   type?: string;
+
+  @ApiPropertyOptional({
+    enum: MAINTENANCE_STATUSES,
+    description: 'Filtro por estado do kanban',
+  })
+  @IsOptional()
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
+  @IsString()
+  @IsIn([...MAINTENANCE_STATUSES])
+  status?: (typeof MAINTENANCE_STATUSES)[number];
+
+  @ApiPropertyOptional({
+    example: 'clxvehicle123',
+    description:
+      'Quando usado em GET /v1/maintenances, restringe ao veículo do usuário',
+  })
+  @IsOptional()
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
+  @IsString()
+  vehicleId?: string;
 
   @ApiPropertyOptional({
     example: '2026-01-01T00:00:00.000Z',
