@@ -23,6 +23,7 @@ describe('MaintenancesService', () => {
     id: 'maint_1',
     vehicleId: 'vehicle_1',
     type: 'Troca de óleo',
+    status: 'TODO',
     description: 'Troca de óleo e filtro',
     serviceDate: new Date('2026-10-03T00:00:00.000Z'),
     odometerKm: 45000,
@@ -79,6 +80,7 @@ describe('MaintenancesService', () => {
       data: {
         vehicleId: 'vehicle_1',
         type: 'Troca de óleo',
+        status: 'TODO',
         description: 'Troca de óleo e filtro',
         serviceDate: new Date('2026-10-03T00:00:00.000Z'),
         odometerKm: 45000,
@@ -117,7 +119,7 @@ describe('MaintenancesService', () => {
           lte: 60000,
         },
       },
-      orderBy: { serviceDate: 'desc' },
+      orderBy: [{ serviceDate: 'desc' }, { id: 'asc' }],
     });
   });
 

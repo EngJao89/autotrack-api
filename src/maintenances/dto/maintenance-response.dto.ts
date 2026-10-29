@@ -1,5 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { MAINTENANCE_TYPES } from '../maintenance.constants';
+import {
+  MAINTENANCE_STATUSES,
+  MAINTENANCE_TYPES,
+} from '../maintenance.constants';
 
 export class MaintenanceResponseDto {
   @ApiProperty({ example: 'clxmaint123' })
@@ -10,6 +13,13 @@ export class MaintenanceResponseDto {
 
   @ApiProperty({ example: 'Troca de óleo', enum: MAINTENANCE_TYPES })
   type!: string;
+
+  @ApiProperty({
+    example: 'TODO',
+    enum: MAINTENANCE_STATUSES,
+    description: 'Estado do kanban (ATP-39)',
+  })
+  status!: (typeof MAINTENANCE_STATUSES)[number];
 
   @ApiPropertyOptional({
     example: 'Troca de óleo e filtro',

@@ -44,19 +44,27 @@ model Vehicle {
   @@index([userId])
 }
 
+enum MaintenanceStatus {
+  TODO
+  IN_PROGRESS
+  DONE
+}
+
 model Maintenance {
-  id           String   @id @default(cuid())
+  id           String            @id @default(cuid())
   vehicleId    String
   type         String
+  status       MaintenanceStatus @default(TODO)
   description  String?
   serviceDate  DateTime
   odometerKm   Int?
   costCents    Int?
   workshopName String?
   notes        String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  vehicle      Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  vehicle      Vehicle           @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
 
   @@index([vehicleId])
+  @@index([status])
 }

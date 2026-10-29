@@ -7,9 +7,11 @@ import {
   HttpStatus,
   Param,
   Patch,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import {
+  ApiBadRequestResponse,
   ApiHeader,
   ApiNoContentResponse,
   ApiNotFoundResponse,
@@ -21,6 +23,7 @@ import {
 import { HttpErrorResponseDto } from '../common/dto/http-error.dto';
 import { CurrentUserId } from '../common/user-context/current-user-id.decorator';
 import { UserContextGuard } from '../common/user-context/user-context.guard';
+import { ListMaintenancesQueryDto } from './dto/list-maintenances.query.dto';
 import { MaintenanceResponseDto } from './dto/maintenance-response.dto';
 import { UpdateMaintenanceDto } from './dto/update-maintenance.dto';
 import { MaintenancesService } from './maintenances.service';
@@ -37,6 +40,21 @@ import { MaintenancesService } from './maintenances.service';
 @Controller('maintenances')
 export class MaintenancesController {
   constructor(private readonly maintenancesService: MaintenancesService) {}
+
+  @Get()
+  @ApiOperation({
+    summary: 'Lista manutenções/reparos do usuário autenticado',
+    description:
+      'Escopo por ownership do veículo. Filtros opcionais: vehicleId, status, type, período. ' +
+      'Usado pelo dashboard kanban (ATP-39) para contagens consistentes.',
+  })
+  @ApiOkResponse({ type: MaintenanceResponseDto, isArray: true })
+  findAll(
+    @CurrentUserId() userId: string,
+    @Query() query: ListMaintenancesQueryDto,
+  ): Promise<MaintenanceResponseDto[]> {
+    return this.maintenancesService.findAllForUser(userId, query);
+  }
 
   @Get(':id')
   @ApiOperation({
@@ -55,9 +73,12 @@ export class MaintenancesController {
   @Patch(':id')
   @ApiOperation({
     summary: 'Atualiza uma manutenção',
-    description: 'Não permite alterar vehicleId, id, createdAt ou updatedAt.',
+    description:
+      'Não permite alterar vehicleId, id, createdAt ou updatedAt. ' +
+      'Mudança de status segue transições ATP-39 (sem reopen a partir de DONE).',
   })
   @ApiOkResponse({ type: MaintenanceResponseDto })
+  @ApiBadRequestResponse({ type: HttpErrorResponseDto })
   @ApiNotFoundResponse({ type: HttpErrorResponseDto })
   update(
     @CurrentUserId() userId: string,
