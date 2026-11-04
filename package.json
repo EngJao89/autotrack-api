@@ -13,7 +13,7 @@
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
-    "start:render": "prisma migrate deploy && node dist/main",
+    "start:render": "npx prisma migrate deploy && node dist/main",
     "lint": "oxlint --type-aware src/ test/ --ignore-pattern 'src/generated/**'",
     "typecheck": "tsc --noEmit",
     "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js",
