@@ -21,10 +21,12 @@ Other social providers are out of scope for this task.
 Variables (see `.env.example`):
 
 ```bash
-FIREBASE_PROJECT_ID=
-FIREBASE_CLIENT_EMAIL=
-FIREBASE_PRIVATE_KEY=
+FIREBASE_PROJECT_ID=autotrack-api-35b3f   # project *id string* — same as mobile EXPO_PUBLIC_FIREBASE_PROJECT_ID
+FIREBASE_CLIENT_EMAIL=…@autotrack-api-35b3f.iam.gserviceaccount.com
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n…\n-----END PRIVATE KEY-----\n"
 ```
+
+`FIREBASE_PROJECT_ID` must be the Firebase project id **string** (not a numeric Google client id / project number) and must match the project embedded in `FIREBASE_CLIENT_EMAIL`. A mismatch makes every Bearer call fail with `AUTH_TOKEN_INVALID` / “Authentication token is invalid or expired” after an otherwise successful Firebase login (ATP-41). The Admin initializer rejects that configuration instead of masking it as a bad client token.
 
 The NestJS API validates `Authorization: Bearer <firebase-id-token>` with `firebase-admin`.
 It does **not** store passwords, hashes, ID tokens or refresh tokens.

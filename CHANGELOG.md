@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+- Reject misconfigured `FIREBASE_PROJECT_ID` (numeric / mismatched service-account project) at Admin init so Bearer verification no longer fails every login with `AUTH_TOKEN_INVALID` ([ATP-41])
+
 ### Added
 - Maintenance kanban `status` (`TODO` | `IN_PROGRESS` | `DONE`), transition rules, `GET /v1/maintenances` list for the authenticated user, and model docs (`docs/maintenance-kanban-model.md`) ([ATP-39])
 - Documented REST `/v1` contracts and data strategy baseline (`docs/api-contracts-and-data-strategy.md`) ([ATP-2])
