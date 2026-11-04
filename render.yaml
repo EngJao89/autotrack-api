@@ -11,7 +11,8 @@ services:
     plan: free
     region: oregon
     rootDir: .
-    buildCommand: npm ci && npm run build
+    # migrate deploy needs DATABASE_URL (dashboard). Idempotent; also runs on start.
+    buildCommand: npm ci && npx prisma migrate deploy && npm run build
     startCommand: npm run start:render
     healthCheckPath: /v1/health
     autoDeploy: true
@@ -19,6 +20,8 @@ services:
       - key: NODE_ENV
         value: production
       - key: SWAGGER_ENABLED
+        value: "true"
+      - key: PGSSL
         value: "true"
       - key: DATABASE_URL
         sync: false

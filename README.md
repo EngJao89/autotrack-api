@@ -432,18 +432,20 @@ Blueprint versionado em `render.yaml`.
 |---|---|
 | Runtime | Node |
 | Branch | `master` (ou branch de deploy aprovada) |
-| Build Command | `npm ci && npm run build` |
-| Start Command | `npm run start:render` |
+| Build Command | `npm ci && npx prisma migrate deploy && npm run build` |
+| Start Command | `npm run start:render` (`prisma migrate deploy && node dist/main`) |
 | Health Check Path | `/v1/health` |
 
 A API escuta em `0.0.0.0` e usa `process.env.PORT` (fornecido pelo Render).
+
+> **Importante:** o Start Command no dashboard **precisa** ser `npm run start:render` (ou incluir `prisma migrate deploy`). Se estiver só `node dist/main` / `npm run start:prod`, o banco fica sem tabelas e o bootstrap falha com `The table 'public.User' does not exist`.
 
 ### Variáveis de ambiente (somente no dashboard)
 
 - `DATABASE_URL` — PostgreSQL gerenciado (Render Postgres, Neon ou Supabase). Preferir `?sslmode=require`
 - `NODE_ENV=production`
 - `SWAGGER_ENABLED=true` (demo/portfólio)
-- `PGSSL=true` (opcional, se a URL não trouxer `sslmode`)
+- `PGSSL=true` (recomendado em managed Postgres)
 - `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY` — service account do Firebase (rotas protegidas)
 
 Não versionar secrets. Após o primeiro deploy, valide:
@@ -452,6 +454,12 @@ Não versionar secrets. Após o primeiro deploy, valide:
 curl https://<seu-servico>.onrender.com/v1/health
 # Swagger: https://<seu-servico>.onrender.com/api/docs
 ```
+
+Se o log mostrar `table 'public.User' does not exist`:
+
+1. Confirme `DATABASE_URL` apontando para o Postgres gerenciado (não localhost).
+2. Confirme Start Command = `npm run start:render`.
+3. Faça **Manual Deploy → Clear build cache & deploy**, ou rode no Shell do Render: `npx prisma migrate deploy`.
 
 > Plano free pode suspender o serviço por inatividade (cold start no primeiro request).
 
