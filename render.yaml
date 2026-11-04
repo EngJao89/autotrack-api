@@ -11,7 +11,7 @@ services:
     plan: free
     region: oregon
     rootDir: .
-    # migrate deploy needs DATABASE_URL (dashboard). Idempotent; also runs on start.
+    # migrate + schema heal need DATABASE_URL (dashboard). start:render auto-heals missing User.
     buildCommand: npm ci && npx prisma migrate deploy && npm run build
     startCommand: npm run start:render
     healthCheckPath: /v1/health

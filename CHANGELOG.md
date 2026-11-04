@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Fixed
+- Heal Render schema drift on start when `public.User` is missing despite migrate history (`scripts/render-start.mjs`); document Shell `migrate reset` recovery ([ATP-43], follows [ATP-42])
 - Ensure Render deploy applies Prisma migrations (`migrate deploy` on build + start) and document recovery when `public.User` is missing ([ATP-42])
 - Reject misconfigured `FIREBASE_PROJECT_ID` (numeric / mismatched service-account project) at Admin init so Bearer verification no longer fails every login with `AUTH_TOKEN_INVALID` ([ATP-41])
 

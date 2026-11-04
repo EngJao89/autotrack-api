@@ -433,12 +433,12 @@ Blueprint versionado em `render.yaml`.
 | Runtime | Node |
 | Branch | `master` (ou branch de deploy aprovada) |
 | Build Command | `npm ci && npx prisma migrate deploy && npm run build` |
-| Start Command | `npm run start:render` (`prisma migrate deploy && node dist/main`) |
+| Start Command | `npm run start:render` (`scripts/render-start.mjs`: migrate deploy + heal + boot) |
 | Health Check Path | `/v1/health` |
 
 A API escuta em `0.0.0.0` e usa `process.env.PORT` (fornecido pelo Render).
 
-> **Importante:** o Start Command no dashboard **precisa** ser `npm run start:render` (ou incluir `prisma migrate deploy`). Se estiver só `node dist/main` / `npm run start:prod`, o banco fica sem tabelas e o bootstrap falha com `The table 'public.User' does not exist`.
+> **Importante:** o Start Command no dashboard **precisa** ser `npm run start:render`. Se estiver só `node dist/main` / `npm run start:prod`, o banco fica sem tabelas e o bootstrap falha com `The table 'public.User' does not exist`. `GET /v1/health` pode continuar `ok` (só testa conexão, não o schema).
 
 ### Variáveis de ambiente (somente no dashboard)
 
@@ -455,11 +455,17 @@ curl https://<seu-servico>.onrender.com/v1/health
 # Swagger: https://<seu-servico>.onrender.com/api/docs
 ```
 
-Se o log mostrar `table 'public.User' does not exist`:
+Se o log do Postgres mostrar `relation "public.User" does not exist`:
 
 1. Confirme `DATABASE_URL` apontando para o Postgres gerenciado (não localhost).
 2. Confirme Start Command = `npm run start:render`.
-3. Faça **Manual Deploy → Clear build cache & deploy**, ou rode no Shell do Render: `npx prisma migrate deploy`.
+3. **Correção imediata (Shell do serviço web no Render):**
+   ```bash
+   npx prisma migrate status
+   npx prisma migrate reset --force --skip-seed
+   ```
+   (demo/banco vazio: recria as tabelas. Se `migrate deploy` sozinho já bastar, use só ele.)
+4. Depois: **Manual Deploy → Clear build cache & deploy** para o start script novo passar a auto-heal esse drift.
 
 > Plano free pode suspender o serviço por inatividade (cold start no primeiro request).
 
