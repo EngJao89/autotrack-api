@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - Reject misconfigured `FIREBASE_PROJECT_ID` (numeric / mismatched service-account project) at Admin init so Bearer verification no longer fails every login with `AUTH_TOKEN_INVALID` ([ATP-41])
 
 ### Added
+- Repair estimates (`RepairEstimate` + items) linked to vehicles, server-side totals, status transitions (`DRAFT` / `FINALIZED` / `ARCHIVED`), ownership, and model docs (`docs/repair-estimates-model.md`) ([ATP-38])
 - Maintenance kanban `status` (`TODO` | `IN_PROGRESS` | `DONE`), transition rules, `GET /v1/maintenances` list for the authenticated user, and model docs (`docs/maintenance-kanban-model.md`) ([ATP-39])
 - Documented REST `/v1` contracts and data strategy baseline (`docs/api-contracts-and-data-strategy.md`) ([ATP-2])
 - Documented API ↔ Mobile integration boundary (`docs/api-mobile-boundary.md`) with responsibility matrix, flows and gaps ([ATP-13])

@@ -5,6 +5,8 @@ import { AuthUserResponseDto } from '../auth/dto/auth-user.dto';
 import { BootstrapResponseDto } from '../auth/dto/bootstrap-response.dto';
 import { HttpErrorResponseDto } from '../common/dto/http-error.dto';
 import { ValidationErrorResponseDto } from '../common/dto/validation-error.dto';
+import { CreateEstimateDto } from '../estimates/dto/create-estimate.dto';
+import { EstimateResponseDto } from '../estimates/dto/estimate-response.dto';
 import { CreateMaintenanceDto } from '../maintenances/dto/create-maintenance.dto';
 import { MaintenanceResponseDto } from '../maintenances/dto/maintenance-response.dto';
 import { CreateUserDto } from '../users/dto/create-user.dto';
@@ -18,7 +20,7 @@ export function setupSwagger(app: INestApplication): void {
   const config = new DocumentBuilder()
     .setTitle('AutoTrack API')
     .setDescription(
-      'API REST do AutoTrack para gestão de usuários, veículos e manutenções. ' +
+      'API REST do AutoTrack para gestão de usuários, veículos, manutenções e orçamentos. ' +
         'Contrato público versionado em `/v1`. Mudanças incompatíveis serão planejadas em `/v2`.\n\n' +
         'Autenticação: Firebase ID Token no header `Authorization: Bearer <token>`.\n\n' +
         'Fluxo de identidade: o app autentica no Firebase (Google ou e-mail/senha), ' +
@@ -38,6 +40,7 @@ export function setupSwagger(app: INestApplication): void {
     .addTag('Users', 'Usuários')
     .addTag('Vehicles', 'Veículos')
     .addTag('Maintenance', 'Manutenções')
+    .addTag('Estimates', 'Orçamentos de reparo (ATP-38)')
     .addTag('Health', 'Saúde da aplicação')
     .addBearerAuth(
       {
@@ -66,6 +69,8 @@ export function setupSwagger(app: INestApplication): void {
       VehicleResponseDto,
       CreateMaintenanceDto,
       MaintenanceResponseDto,
+      CreateEstimateDto,
+      EstimateResponseDto,
     ],
   });
 
