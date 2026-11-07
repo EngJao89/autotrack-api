@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 import { HealthModule } from './health/health.module';
+import { EstimatesModule } from './estimates/estimates.module';
 import { MaintenancesModule } from './maintenances/maintenances.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { UsersModule } from './users/users.module';
@@ -21,6 +22,7 @@ import { VehiclesModule } from './vehicles/vehicles.module';
     UsersModule,
     VehiclesModule,
     MaintenancesModule,
+    EstimatesModule,
   ],
   controllers: [AppController],
   providers: [

@@ -61,6 +61,8 @@ export function migrateE2eDatabase(): void {
 }
 
 export async function resetDatabase(prisma: PrismaService): Promise<void> {
+  await prisma.repairEstimateItem.deleteMany();
+  await prisma.repairEstimate.deleteMany();
   await prisma.maintenance.deleteMany();
   await prisma.vehicle.deleteMany();
   await prisma.user.deleteMany();

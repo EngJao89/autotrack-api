@@ -335,6 +335,42 @@ curl "http://localhost:3333/v1/vehicles/$VEHICLE_ID/maintenances?type=Troca%20de
 
 Veículo/manutenção inexistente ou de outro usuário → `404`.
 
+## Estimates (orçamento de reparo)
+
+Estimativa de custo vinculada ao veículo (`Vehicle 1:N RepairEstimate 1:N RepairEstimateItem`). Domínio **separado** de Maintenance — não cria manutenção e não usa `costCents` ([ATP-38](./docs/repair-estimates-model.md)).
+
+| Método | Rota | Descrição |
+|---|---|---|
+| `POST` | `/v1/vehicles/:vehicleId/estimates` | Cria orçamento (`DRAFT`) |
+| `GET` | `/v1/vehicles/:vehicleId/estimates` | Lista do veículo |
+| `GET` | `/v1/estimates` | Lista do usuário (`?vehicleId=&status=`) |
+| `GET` | `/v1/estimates/:id` | Detalhe com itens |
+| `PATCH` | `/v1/estimates/:id` | Edita conteúdo (só `DRAFT`) ou status |
+| `DELETE` | `/v1/estimates/:id` | Remove (hard delete) |
+
+```json
+{
+  "title": "Troca de embreagem",
+  "description": "Orçamento oficina centro",
+  "items": [
+    { "description": "Kit embreagem", "category": "PART", "quantity": 1, "unitPriceCents": 89000 },
+    { "description": "Mão de obra", "category": "LABOR", "quantity": 1, "unitPriceCents": 35000 }
+  ]
+}
+```
+
+- `totalCents` é calculado no backend (`sum(quantity * unitPriceCents)`); total do client é ignorado
+- Moeda MVP: `BRL`; quantidade inteira ≥ 1; `unitPriceCents` ≥ 0
+- Status: `DRAFT` → `FINALIZED` \| `ARCHIVED`; `FINALIZED` → `DRAFT` \| `ARCHIVED`
+- Remoção do veículo faz cascade nos orçamentos
+
+```bash
+curl -X POST "http://localhost:3333/v1/vehicles/$VEHICLE_ID/estimates" \
+  -H "Content-Type: application/json" \
+  -H "X-User-Id: $USER_ID" \
+  -d '{"title":"Troca de embreagem","items":[{"description":"Kit","category":"PART","quantity":1,"unitPriceCents":89000}]}'
+```
+
 ## Documentação OpenAPI (Swagger)
 
 A UI do Swagger fica em:
